@@ -1,18 +1,25 @@
-# character ID (0), file name (1), nickname (2), level (3), rarity (4), HP (5), ATK (6), SPD (7), Favourite (8), Current XP (9), Hidden Identifier (10)
-
-import discord, random, os, re, pickle, math, asyncio, io
-from time import time
+# character ID (0), file name (1), nickname (2), level (3), rarity (4), HP (5), ATK (6), SPD (7), Favourite (8),
+# Current XP (9), Hidden Identifier (10)
+import asyncio
+import discord
+import io
+import math
+import os
+import pickle
+import random
+import re
+from PIL import Image, ImageFont, ImageDraw
+from base_stats import *
+from char_list import *
+from collections import OrderedDict
 from discord.ext import tasks, commands
 from discord.ext.commands import has_permissions, MissingPermissions
 from discord.ext.commands.cooldowns import BucketType
-from char_list import *
-from base_stats import *
-from uniques import *
-from collections import OrderedDict
-from PIL import Image, ImageFont, ImageDraw
-from settings import *
 from help_data import *
+from settings import *
 from spellcards import *
+from time import time
+from uniques import *
 
 # intents = discord.Intents.default()
 # intents.members = True
@@ -85,7 +92,8 @@ def get_playersave():  # player score
 
 
 def get_charinfo():  # player owned cards
-	# character ID (0), file name (1), nickname (2), level (3), rarity (4), HP (5), ATK (6), SPD (7), Favourite (8), Current XP (9), Hidden Identifier (10)
+	# character ID (0), file name (1), nickname (2), level (3), rarity (4), HP (5), ATK (6), SPD (7), Favourite (8),
+	# Current XP (9), Hidden Identifier (10)
 	global char_info
 	return char_info
 
@@ -255,16 +263,18 @@ async def help(ctx, *, command=None):
 	thumb = ["https://i.imgur.com/javeshe.gif", "https://i.imgur.com/BiaSHWW.jpg", "https://i.imgur.com/7nCvHVq.jpg",
 			 "https://i.imgur.com/eMmTjJy.jpg", "https://i.imgur.com/gY9g699.jpg", "https://i.imgur.com/fitJnaz.png"]
 
-	if command == None:
+	if command is None:
 		embed = discord.Embed(
 			title="Sakuya Bot Help Page",
 			colour=discord.Color.from_rgb(0, 255, 255),
-			description="Need Links? https://top.gg/bot/717160348502982729\nType +help [command/category] to see more information about them"
+			description="Need Links? https://top.gg/bot/717160348502982729\nType +help [command/category] to see more "
+						"information about them "
 		)
 		embed.add_field(name="Help Categories",
 						value="• Touhou Cards\n• Trading\n• PvP\n• Combat\n• Rewards\n• Misc\n• New")
 		embed.set_footer(
-			text="[*] symbol means everything including spaces are included in that parameter. [= x] means that parameter defaults to that value and does not need an input from the user")
+			text="[*] symbol means everything including spaces are included in that parameter. [= x] means that "
+				 "parameter defaults to that value and does not need an input from the user")
 
 	else:
 		command = command.lower()  # Set input to all lower case
@@ -277,7 +287,8 @@ async def help(ctx, *, command=None):
 				description=data[2]
 			)
 			embed.set_footer(
-				text="[*] symbol means everything including spaces are included in that parameter. [= x] means that parameter defaults to that value and does not need an input from the user")
+				text="[*] symbol means everything including spaces are included in that parameter. [= x] means that "
+					 "parameter defaults to that value and does not need an input from the user")
 
 		elif data[0] == 1:  # Help page is a module/category
 			embed = discord.Embed(
@@ -292,8 +303,6 @@ async def help(ctx, *, command=None):
 						if item[3] == 1:
 							embed.add_field(name=com, value="See +help {command name} for full details")
 							continue
-						else:
-							0 / 0
 					except:
 						pass
 					embed.add_field(name=com, value=item[2])
@@ -310,6 +319,9 @@ async def help(ctx, *, command=None):
 				colour=discord.Color.from_rgb(0, 255, 255),
 				description=data[1]
 			)
+		else:
+			# go away error, who knows what this will do
+			embed = None
 
 	embed.set_thumbnail(url=random.choice(thumb))
 	await ctx.send(embed=embed)
@@ -329,7 +341,8 @@ async def help_error(ctx, error):
 @client.command()
 async def invite(ctx):
 	await ctx.send(
-		"https://discord.com/api/oauth2/authorize?client_id=864237884473999382&permissions=117824&scope=bot%20applications.commands")
+		"https://discord.com/api/oauth2/authorize?client_id=864237884473999382&permissions=117824&scope=bot"
+		"%20applications.commands")
 
 
 @client.command()
@@ -339,10 +352,13 @@ async def new(ctx):
 
 @client.command()
 async def ns(ctx):
-	print(client.guilds)
+	# now less invasive
+	print(len(client.guilds))
+	glist = ""
+	for guild in client.guilds:
+		glist += guild.name+" - "+str(guild.member_count)+", "
+	print(glist)
 
-
-# print(len(client.guilds))
 
 @client.command()
 async def user_count(ctx):
@@ -468,7 +484,8 @@ async def give_item(ctx, ID, name, amount):
 
 @client.command(aliases=["upgrade"])
 async def feed(ctx, ID, amount, feed_type="coin"):
-	# character ID (0), file name (1), nickname (2), level (3), rarity (4), HP (5), ATK (6), SPD (7), Favourite (8), Current XP (9), Hidden Identifier (10)
+	# character ID (0), file name (1), nickname (2), level (3), rarity (4), HP (5), ATK (6), SPD (7), Favourite (8),
+	# Current XP (9), Hidden Identifier (10)
 	"""Feeds your coins to the specified touhou card. You must specify all categories"""
 	global char_info
 	user_chars = char_info.get(ctx.message.author.id)
@@ -484,7 +501,7 @@ async def feed(ctx, ID, amount, feed_type="coin"):
 	if ID <= 0:
 		await ctx.send("Please input a non-negative non-zero character ID")
 		return None
-	elif user_chars == None:
+	elif user_chars is None:
 		await ctx.send("You do not have any characters")
 		return None
 
@@ -504,7 +521,8 @@ async def feed(ctx, ID, amount, feed_type="coin"):
 @feed.error
 async def feed_error(ctx, error):
 	await ctx.send(
-		"You must specify a character ID and feed amount\nUse this command as follows: +feed {ID} {Amount} without the brackets")
+		"You must specify a character ID and feed amount\nUse this command as follows: +feed {ID} {Amount} without the "
+		"brackets")
 
 
 async def feed_stat(ctx, char, ID, amount, feed_type):
@@ -552,7 +570,7 @@ def card_cap(card):
 		base = unique[card[1]]
 	else:  # generic characters
 		base = base_stats.get(card[0])
-	if base == None:
+	if base is None:
 		base = [10, 10, 10]
 
 	level = card[3]
@@ -576,9 +594,10 @@ async def feed_coin(ctx, char, ID, amount):
 	elif char[3] >= LEVEL_CAP:
 		await ctx.send("This card is already at the level cap and cannot be fed points")
 		return None
-	elif coins_owned == None:
+	elif coins_owned is None:
 		await ctx.send(
-			"You do not have a wallet or any characters. Please get a character using the +guess command first before you use this command")
+			"You do not have a wallet or any characters. Please get a character using the +guess command first before "
+			"you use this command")
 		return None
 
 	current_xp = char[9] + amount
@@ -600,8 +619,9 @@ async def feed_coin(ctx, char, ID, amount):
 	if base == None:
 		base = [10, 10, 10]
 
-	# return ([character,image_name,image_name.split('.')[0],level,rarity,HP,ATK,SPD,False,0])
-	# character ID (0), file name (1), nickname (2), level (3), rarity (4), HP (5), ATK (6), SPD (7), Favourite (8), Current XP (9) note: this is xp to next level not total xp
+	# return ([character,image_name,image_name.split('.')[0],level,rarity,HP,ATK,SPD,False,0]) character ID (0),
+	# file name (1), nickname (2), level (3), rarity (4), HP (5), ATK (6), SPD (7), Favourite (8), Current XP (9)
+	# note: this is xp to next level not total xp
 
 	level = char[3]
 
@@ -643,7 +663,9 @@ async def feed_coin(ctx, char, ID, amount):
 
 @client.command()
 async def sort(ctx, option, reverse=True):
-	"""Sorts your touhou characters. Type in +sort {option} {descending (true/false defaults to true if nothing is typed in)} to sort your characters\nOptions for sorting are {Character} {Image} {Level} {Rarity} {HP} {Attack} {Speed} and {Favourite}"""
+	"""Sorts your touhou characters. Type in +sort {option} {descending (true/false defaults to true if nothing is
+	typed in)} to sort your characters\nOptions for sorting are {Character} {Image} {Level} {Rarity} {HP} {Attack} {
+	Speed} and {Favourite} """
 	global char_info
 	try:
 		char_info[ctx.message.author.id].sort(key=lambda x: x[
@@ -653,13 +675,16 @@ async def sort(ctx, option, reverse=True):
 		await ctx.send("Sort complete")
 	except Exception as e:
 		await ctx.send(
-			"Please follow the command with one of the following option to sort by: 'character', 'image', 'name', 'level', 'rarity', 'HP', 'Attack', 'Speed', favourite")
+			"Please follow the command with one of the following option to sort by: 'character', 'image', 'name', "
+			"'level', 'rarity', 'HP', 'Attack', 'Speed', favourite")
 
 
 @sort.error
 async def sort_error(ctx, error):
 	await ctx.send(
-		"Please follow the command with one of the following option to sort by: 'character', 'image', 'name', 'level', 'rarity', 'HP', 'Attack', 'Speed', favourite. You may also type (false) after the sort option to change it into ascending order. (Defaults to descending order)")
+		"Please follow the command with one of the following option to sort by: 'character', 'image', 'name', 'level', "
+		"'rarity', 'HP', 'Attack', 'Speed', favourite. You may also type (false) after the sort option to change it "
+		"into ascending order. (Defaults to descending order)")
 
 
 @client.command()
@@ -731,7 +756,9 @@ async def filter(ctx, *, options):
 					for card in filtered_cards:
 						char_name = card[0]
 						aliases = characters.get(char_name)
-						if aliases != None:  # Look no one but admins should have cards outside of those in the list so im gonna do this poorly. Get scammed future me
+						if aliases is not None:
+							# Look no one but admins should have cards outside of those in the list
+							# so im gonna do this poorly. Get scammed future me
 							aliases = [x.lower() for x in aliases]
 							if op[1] in aliases:
 								temp.append(card)
@@ -759,7 +786,8 @@ async def filter(ctx, *, options):
 			embed = discord.Embed(
 				title="Filter Error",
 				colour=discord.Color.from_rgb(255, 0, 0),
-				description="There was an error with the following search criteria.\n{}\n There are no comparison operators. Please use ONE of the following per filter \n- < \n- > \n- =".format(
+				description="There was an error with the following search criteria.\n{}\n There are no comparison "
+							"operators. Please use ONE of the following per filter \n- < \n- > \n- =".format(
 					operation)
 			)
 			await ctx.send(embed=embed)
@@ -768,7 +796,8 @@ async def filter(ctx, *, options):
 
 	if num_cards > 200:
 		await filter_raise_error(ctx, options,
-								 "Exceeded the maximum of 200 search results. Please use more constricting querries and consider using the +sort command for more general searching")
+								 "Exceeded the maximum of 200 search results. Please use more constricting querries "
+								 "and consider using the +sort command for more general searching")
 		return
 	elif num_cards <= 0:
 		await filter_raise_error(ctx, options, "No cards matching the given querry were found")
@@ -895,7 +924,8 @@ async def filter_error(ctx, error):
 	embed = discord.Embed(
 		title="Command Error",
 		colour=discord.Color.from_rgb(255, 0, 0),
-		description="The following error has occured when running the filter command\n{}\nPlease message Narwaffles#0927 if this proves to be an issue".format(
+		description="The following error has occured when running the filter command\n{}\nPlease message "
+					"TemmieGamerGuy#3754 if this proves to be an issue".format(
 			error)
 	)
 	await ctx.send(embed=embed)
@@ -945,11 +975,12 @@ async def rename(ctx, id, *, name):
 		await ctx.send("Character has been sucessfully renamed")
 	except Exception as e:
 		await ctx.send(
-			"You do not have a character with the same ID\nYou must use this command as follows +rename <id (number)> <name (you can have spaces)> without the brackets")
+			"You do not have a character with the same ID\nYou must use this command as follows +rename <id (number)> "
+			"<name (you can have spaces)> without the brackets")
 
 
-def generate_char(character, image_name, identifier, level=0, weights=[70, 20, 7, 2,
-																	   1]):  # Character refers to character code and image_name is the file name (make sure to strip the extension)
+def generate_char(character, image_name, identifier, level=0, weights=[70, 20, 7, 2, 1]):
+	# Character refers to character code and image_name is the file name (make sure to strip the extension)
 	rarities = [1, 2, 3, 4, 5]
 
 	if image_name in unique:  # unique characters
@@ -970,10 +1001,11 @@ def generate_char(character, image_name, identifier, level=0, weights=[70, 20, 7
 		ATK += base[1] + random.randint(-2, 2) + (rarity - 1)
 		SPD += base[2] + random.randint(-2, 2) + (rarity - 1)
 
-	return ([character, image_name, characters[character][0], level, rarity, HP, ATK, SPD, False, 0, identifier])
+	return [character, image_name, characters[character][0], level, rarity, HP, ATK, SPD, False, 0, identifier]
 
 
-# character ID (0), file name (1), nickname (2), level (3), rarity (4), HP (5), ATK (6), SPD (7), Favourite (8), Current XP (9), Hidden Identifier (10)
+# character ID (0), file name (1), nickname (2), level (3), rarity (4), HP (5), ATK (6), SPD (7), Favourite (8),
+# Current XP (9), Hidden Identifier (10)
 
 @client.command()
 async def create(ctx, user, folder, rarity, lvl, hp, atk, spd, *, img):
@@ -1119,9 +1151,10 @@ async def test_img(ctx, id1, id2):
 async def trade(ctx, user: discord.Member):
 	"""trade your touhou cards with other users"""
 	sender = ctx.message.author
-	# if user in ctx.message.guild.members == False: #seems like command crashes before it even gets to this point if user is not from server so I'll just leave it out
-	#	await ctx.send("User you are trying to trade with someone who is not in the server")
-	#	return
+	if ctx.guild.get_member(user.id) is None:
+		# That's how you check if someone's on the server
+		await ctx.send("User you are trying to trade with someone who is not in the server")
+		return
 
 	if user is sender:
 		await ctx.send("You cannot trade with your self")
@@ -1154,7 +1187,7 @@ async def offer(ctx, id=0):
 	global trade_inst
 
 	trade_info = []
-
+	i=0
 	for trades in trade_inst:
 		for i in range(2):
 			if trades[i][0] == ctx.message.author.id:
@@ -1162,7 +1195,7 @@ async def offer(ctx, id=0):
 				break
 
 	# checks
-	if trade_info == []:
+	if not trade_info:
 		await ctx.send(
 			"You are not currently in a trade. Use +trade user to start a trade with someone before using this command")
 		return
@@ -1188,9 +1221,12 @@ async def offer(ctx, id=0):
 	new_embed = discord.Embed(
 		title="Trade Window",
 		colour=discord.Color.from_rgb(253, 255, 0),
-		description="Type in +offer {ID} to put a card up for trade. Press \u2705 when you have confirmed that you are ok with the contents being traded. If there is a change in the offer, you must reconfirm the offer. Press :x: to cancel the trade. Note that you must either complete the trade or cancel it to start a new trade. Trade sessions do not expire"
+		description="Type in +offer {ID} to put a card up for trade. Press \u2705 when you have confirmed that you are "
+					"ok with the contents being traded. If there is a change in the offer, you must reconfirm the "
+					"offer. Press :x: to cancel the trade. Note that you must either complete the trade or cancel it "
+					"to start a new trade. Trade sessions do not expire "
 	)
-	if trade_info[0][1][1] == None:
+	if trade_info[0][1][1] is None:
 		line1 = "Nothing"
 	else:
 		line1 = "Name: " + str(trade_info[0][1][1][2]) + "	| Lv: " + str(
@@ -1198,7 +1234,7 @@ async def offer(ctx, id=0):
 			trade_info[0][1][1][6]) + "	| SPD: " + str(trade_info[0][1][1][7]) + "	| Rarity: " + \
 				["★☆☆☆☆", "★★☆☆☆", "★★★☆☆", "★★★★☆", "★★★★★", "★★★★★★"][trade_info[0][1][1][4] - 1]
 
-	if trade_info[1][1][1] == None:
+	if trade_info[1][1][1] is None:
 		line2 = "Nothing"
 	else:
 		line2 = "Name: " + str(trade_info[1][1][1][2]) + "	| Lv: " + str(
@@ -1307,10 +1343,16 @@ async def on_raw_reaction_add(payload):
 					new_embed = discord.Embed(
 						title="Trade Window",
 						colour=discord.Color.from_rgb(253, 255, 0),
-						description="Type in +offer {ID} to put a card up for trade. Press \u2705 when you have confirmed that you are ok with the contents being traded. If there is a change in the offer, you must reconfirm the offer. Press :x: to cancel the trade. Note that you must either complete the trade or cancel it to start a new trade. Trade sessions do not expire"
+						description="Type in +offer {ID} to put a card up for trade. Press \u2705 when you have "
+									"confirmed that you are ok with the contents being traded. If there is a change in "
+									"the offer, you must reconfirm the offer. Press :x: to cancel the trade. Note that "
+									"you must either complete the trade or cancel it to start a new trade. Trade "
+									"sessions do not expire "
 					)
 					new_embed.add_field(name=str(client.get_user(int(sender))), value="Nothing",
-										inline=False)  # god this is so stupid. I get the user, convert it to an id and get the user info back using this command. Im too lazy to do this properly but this is just getting worse and worse
+										inline=False)  # god this is so stupid. I get the user, convert it to an id
+					# and get the user info back using this command. Im too lazy to do this properly but this is just
+					# getting worse and worse
 					new_embed.add_field(name="--------------------------------------------------------------",
 										value="--------------------------------------------------------------",
 										inline=False)
@@ -1333,7 +1375,7 @@ async def on_raw_reaction_add(payload):
 					return
 		elif color == discord.Colour(16645888):  # trade menu
 			trade_info = []
-			i=0
+			i = 0
 			for trades in trade_inst:
 				for i in range(2):
 					if int(trades[i][0]) == int(user.id):
@@ -1360,11 +1402,12 @@ async def on_raw_reaction_add(payload):
 				if trade_info[0][2] and trade_info[1][2]:
 					fail1 = False
 					fail2 = False
-					new_embed.color = discord.Color.from_rgb(0, 255,
-															 0)  # I swear this is going to cause problems in the future but meh. let my future self suffer for this autism
+					new_embed.color = discord.Color.from_rgb(0, 255, 0)
+					# I swear this is going to cause problems in the future but meh. let my future self suffer for this autism
 					new_embed.description = "Trade has been completed"
 					trade_inst.remove(trade_info)  # deletes trade instance
-					# check to see if the characters being trades are still present in inventories (done separetly so no characaters are lost)
+					# check to see if the characters being trades are still present in inventories (done separetly so
+					# no characaters are lost)
 					try:  # Player 1
 						char_info[int(trade_info[0][0])].remove(trade_info[0][1][1])
 					except Exception as e:
@@ -1465,7 +1508,7 @@ async def inventory(ctx, page=1):
 	page -= 1
 
 	user_chars = char_info.get(ctx.message.author.id)
-	if user_chars == None:
+	if user_chars is None:
 		await ctx.send(
 			"Sorry {} , you do not have any character cards yet. Try getting one by using the +guess command".format(
 				ctx.message.author))
@@ -1520,7 +1563,7 @@ async def favourite(ctx, id=0):
 def xp(level):
 	"""Returns total xp needed to reach next level"""
 	# (10+(rarity-1))*(1+0.2)^level
-	return (level ** 3)
+	return level ** 3
 
 
 def value(char):
@@ -1529,7 +1572,8 @@ def value(char):
 
 @client.command()
 async def sell(ctx, target, *, stars=0):
-	"""Sell characters\nType in the character to sell invidually (ID) or type in +sell bulk {rarity} to sell all characters of a certain rarity"""
+	"""Sell characters\nType in the character to sell invidually (ID) or type in +sell bulk {rarity} to sell all
+	characters of a certain rarity """
 	global char_info
 	global player_coins
 
@@ -1543,6 +1587,7 @@ async def sell(ctx, target, *, stars=0):
 			chars = char_info[ctx.message.author.id]
 		except Exception as e:
 			await ctx.send("You do not have any characters")
+			return
 		sell_chars = []
 		keep_chars = []
 		for char in chars:
@@ -1570,8 +1615,8 @@ async def sell(ctx, target, *, stars=0):
 		)
 		await ctx.send(embed=suc_embed)
 
-
-	else:  # Single selling
+	else:
+		# Single selling
 		target = int(target)
 		try:
 			char = char_info[ctx.message.author.id][target - 1]
@@ -1581,7 +1626,8 @@ async def sell(ctx, target, *, stars=0):
 
 		if char[8]:
 			await ctx.send(
-				"You cannot sell characters you have favorited. Please unfavorite by typing +favorite {ID} and try selling the character again")
+				"You cannot sell characters you have favorited. Please unfavorite by typing +favorite {ID} and try "
+				"selling the character again")
 			return None
 		else:
 			char_info[ctx.message.author.id].pop(target - 1)
@@ -1625,8 +1671,8 @@ async def info_internal(channel, owner, id):
 	xp_bar = " [" + ("█" * bar) + ("-" * (10 - bar)) + "] " + str(current_xp) + "/" + str(
 		xp_toLvl) + " ({:.1f}%)".format(progress)
 	char_embed.add_field(name="Rarity:	",
-						 value=["★☆☆☆☆", "★★☆☆☆", "★★★☆☆", "★★★★☆", "★★★★★", "★★★★★★"][user_chars[id][4] - 1],
-						 inline=False)
+						value=["★☆☆☆☆", "★★☆☆☆", "★★★☆☆", "★★★★☆", "★★★★★", "★★★★★★"][user_chars[id][4] - 1],
+						inline=False)
 	char_embed.add_field(name="Level:		", value=str(user_chars[id][3]) + "		" + xp_bar, inline=False)
 	char_embed.add_field(name="HP:		", value=user_chars[id][5], inline=True)
 	char_embed.add_field(name="ATK:		", value=user_chars[id][6], inline=True)
@@ -1643,7 +1689,8 @@ async def info_internal(channel, owner, id):
 
 @client.command()
 async def info(ctx, id=1):
-	# character ID (0), file name (1), nickname (2), level (3), rarity (4), HP (5), ATK (6), SPD (7), Favourite (8), Current XP (9), Hidden Identifier (10)
+	# character ID (0), file name (1), nickname (2), level (3), rarity (4), HP (5), ATK (6), SPD (7), Favourite (8),
+	# Current XP (9), Hidden Identifier (10)
 	"""Shows info about a specific character card you own"""
 	global char_info
 
@@ -1657,7 +1704,7 @@ async def info(ctx, id=1):
 		return None
 
 	user_chars = char_info.get(ctx.message.author.id)
-	if user_chars == None:
+	if user_chars is None:
 		await ctx.send(
 			"Sorry {}, you do have any character cards yet. Try getting one by using the +guess command".format(
 				ctx.message.author))
@@ -1752,7 +1799,7 @@ async def guess(ctx):
 	global guess_counter
 	global correct_counter
 
-	if (ctx.channel.id in guess_inst):  # checks if channel is in list of active guess instances
+	if ctx.channel.id in guess_inst:  # checks if channel is in list of active guess instances
 		await ctx.send(
 			"Guess instance already active, please wait until previous instance ends until starting a new one.")
 		return None
@@ -1836,7 +1883,6 @@ async def guess(ctx):
 			char_info[msg.author.id].append(new_char)
 		except Exception as e:
 			char_info[msg.author.id] = [new_char]
-
 
 	except Exception as e:
 		# print(e)
