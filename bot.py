@@ -1244,8 +1244,8 @@ async def on_raw_reaction_add(payload):
 	global trade_inst
 	global trade_count
 	try:
-		message = await client.fetch_message(payload.message_id)
 		channel = client.get_channel(payload.channel_id)
+		message = await channel.fetch_message(payload.message_id)
 		author = message.author.id
 		user = payload.member
 		reaction = payload.emoji
