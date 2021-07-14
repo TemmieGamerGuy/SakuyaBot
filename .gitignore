@@ -1,0 +1,13 @@
+.env
+touhoushit/
+.idea
+useage_log.txt
+__pycache__/
+*.pkl
+*.ttf
+BGs
+Fonts
+Hud
+*.otf
+Rarities
+*.png

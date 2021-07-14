@@ -1,0 +1,16 @@
+import discord
+from discord.ext import commands, tasks
+from discord.ext.commands.cooldowns import BucketType
+from bot import get_charinfo,put_charinfo,get_playercoins,add_playercoins,add_playervouchers,add_playerpasses,get_playervouchers,get_playerpasses,info_internal,create_card
+from settings import *
+from char_list import *
+
+char_dir = ".//touhoushit"
+
+class Achievements(commands.cog):
+	def __init__(self, client):
+		self.client = client
+		
+		
+def setup(client):
+	client.add_cog(achievements(client))
