@@ -269,17 +269,6 @@ async def on_connect():
 	print("Now Auto Saving")
 
 
-"""	
-@client.event
-async def on_member_join(member):
-	print(f"{member} has joined the server")
-	
-@client.event
-async def on_member_remove(member):
-	print(f"{member} has left the server")
-"""
-
-
 @client.command()
 async def help(ctx, *, command=None):
 	thumb = ["https://i.imgur.com/javeshe.gif", "https://i.imgur.com/BiaSHWW.jpg", "https://i.imgur.com/7nCvHVq.jpg",
@@ -1178,9 +1167,9 @@ async def test_img(ctx, id1, id2):
 async def trade(ctx, user: discord.Member):
 	"""trade your touhou cards with other users"""
 	sender = ctx.message.author
-	if ctx.guild.get_member(user.id) is None:
+	if await ctx.guild.fetch_member(user.id) is None:
 		# That's how you check if someone's on the server
-		await ctx.send("User you are trying to trade with someone who is not in the server")
+		await ctx.send("User you are trying to trade with is not on the server")
 		return
 
 	if user is sender:
