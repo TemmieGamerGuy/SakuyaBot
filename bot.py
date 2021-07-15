@@ -20,12 +20,17 @@ from settings import *
 from spellcards import *
 from time import time
 from uniques import *
+from discord_slash import SlashCommand, SlashContext
+from discord_slash.utils.manage_commands import create_option, create_choice
 
 # intents = discord.Intents.default()
 # intents.members = True
 
 # client = commands.Bot(command_prefix = "+",intents = intents)
 client = commands.Bot(command_prefix="+")
+slash = SlashCommand(client, sync_commands=True)
+guild_ids=[]
+
 activity = discord.Game(name="+new | New commands")
 
 guess_counter = 0
@@ -221,6 +226,18 @@ async def save():
 	save_obj(achievements, "achievements")
 
 
+@tasks.loop(hours=24)
+async def suggestions():
+	with open("suggestions.txt", "r+", encoding="utf-8") as f:
+		suggests = [line.rstrip() for line in f]
+		f.truncate(0)
+	if len(suggests) >=1:
+		owner = await client.fetch_user(OWNER_ID)
+		await owner.send("New suggestions for today")
+		for sugest in suggests:
+			await owner.send(sugest)
+
+
 @tasks.loop(minutes=1.0)
 async def log_useage():
 	global guess_counter
@@ -237,13 +254,18 @@ async def log_start():
 
 @client.event
 async def on_connect():
+	global guild_ids
 	print("Bot is running")
 	await log_start()
 	log_useage.start()
 	print("Now keeping guess useage logs")
-	await client.change_presence(activity=discord.Game(name="Notice any bugs? Contact TemmieGamerGuy#3754 to fix them"))
+	await client.change_presence(activity=discord.Game(name="Have a suggestion or bug? Contact TemmieGamerGuy#3754"))
+	guild_ids=[]
+	for guild in client.guilds:
+		guild_ids.append(guild.id)
 	# print("Changed presence")
 	save.start()
+	suggestions.start()
 	print("Now Auto Saving")
 
 
@@ -472,7 +494,12 @@ def error_embed(command, error, serious=0):
 		title="Command Error",
 		color=0xFF0000,
 		description="{} command has failed due to the following reason.\n{}".format(command,
-																					error) + "\nPlease report this on the Sakuya bot support server or message Narwaffles#0927" * serious
+																					error) + "\nPlease report this on "
+																							 "the Sakuya bot "
+																							 "replacement support "
+																							 "server or message "
+																							 "TemmieGamerGuy#3754" *
+					serious
 	)
 	return embed
 
@@ -616,7 +643,7 @@ async def feed_coin(ctx, char, ID, amount):
 		base = unique[char[1]]
 	else:  # generic characters
 		base = base_stats.get(char[0])
-	if base == None:
+	if base is None:
 		base = [10, 10, 10]
 
 	# return ([character,image_name,image_name.split('.')[0],level,rarity,HP,ATK,SPD,False,0]) character ID (0),
@@ -948,8 +975,7 @@ async def quit(ctx):
 		save_obj(player_coins, "Coin_info")
 		save_obj(trade_count, "Trade_count")
 		save_obj(achievements, "achievements")
-		await ctx.bot.logout()
-		exit()
+		print("safe to restart")
 
 
 @client.command()
@@ -994,7 +1020,7 @@ def generate_char(character, image_name, identifier, level=0, weights=[70, 20, 7
 	HP = 0
 	ATK = 0
 	SPD = 0
-	if base == None:
+	if base is None:
 		base = [10, 10, 10]
 	for i in range(level):
 		HP += base[0] + random.randint(-2, 2) + (rarity - 1)
@@ -1026,7 +1052,7 @@ async def create(ctx, user, folder, rarity, lvl, hp, atk, spd, *, img):
 @create.error
 async def create_error(ctx, error):
 	print(error)
-	await ctx.send("Stop being retarded")
+	await ctx.send("An error occurred")
 
 
 def create_card(user, character, image, lvl,
@@ -1046,7 +1072,7 @@ def create_card(user, character, image, lvl,
 
 
 async def check_trading(ctx, sender, target):
-	'''returns true if the 2 given users can trade'''
+	"""returns true if the 2 given users can trade"""
 	global trade_inst
 
 	for trades in trade_inst:
@@ -1057,7 +1083,8 @@ async def check_trading(ctx, sender, target):
 				return False
 			elif trades[i][0] == target:
 				await ctx.send(
-					"The person you are trying to trade with is currently trading with someone. Please wait until they finish before starting a new trade")
+					"The person you are trying to trade with is currently trading with someone. Please wait until they "
+					"finish before starting a new trade")
 				return False
 	return True
 
@@ -1108,7 +1135,7 @@ def generate_trade_img(img1=None, img2=None):  # generates trade image with spri
 
 		bgDraw.text((38, 349 - int(size[1] / 2)), "HP {}  ATK {}  SPD {}".format(img1[5], img1[6], img1[7]), font=font)
 
-	if img2 != None:
+	if img2 is not None:
 		im2 = Image.open(char_dir + "//" + img2[0] + "//" + img2[1])
 		im2_fit = im2.resize((159, 180))  # size =159x180
 
@@ -1499,6 +1526,21 @@ async def server(ctx):
 	await ctx.author.send("https://discord.gg/mRpewrh")
 
 
+@slash.slash(name='suggest', description='Suggest an improvement for the bot', guild_ids=guild_ids,
+			 options=[
+				 create_option(
+					 name="suggestion",
+					 description="Your suggestions",
+					 option_type=3,
+					 required=True,
+				 )]
+			 )
+async def _suggest(ctx, suggestion):
+	with open("suggestions.txt", "a", encoding="utf-8") as f:
+		f.write(suggestion)
+	await ctx.send("Suggestion recorded")
+
+
 @client.command(aliases=['inv', 'characters', 'cards', 'char', 'card'])
 async def inventory(ctx, page=1):
 	"""Shows info about all character cards you own. Type in a number after it to display other pages (+inv {page})"""
@@ -1506,6 +1548,10 @@ async def inventory(ctx, page=1):
 	global player_coins
 
 	page -= 1
+	try:
+		page = int(page)
+	except:
+		await ctx.send(str(page) + " is not a page number")
 
 	user_chars = char_info.get(ctx.message.author.id)
 	if user_chars is None:
@@ -1900,11 +1946,12 @@ async def guess(ctx):
 @guess.error
 async def guess_error(ctx, error):
 	global guess_inst
-	while ctx.channel.id in guess_inst: guess_inst.remove(
-		ctx.channel.id)  # Remove all instances of channel id in guess_inst for use next time command is called
+	while ctx.channel.id in guess_inst:
+		guess_inst.remove(ctx.channel.id)
+	# Remove all instances of channel id in guess_inst for use next time command is called
 	# print(error)
 	await ctx.send("Bot has raised the error:\n`" + str(
-		error) + "`\nPlease send the error message to Narwaffles#0927 if its not a cooldown error")
+		error) + "`\nPlease send the error message to TemmieGamerGuy#3754 if its not a cooldown error")
 
 
 for filename in os.listdir('./cogs'):
