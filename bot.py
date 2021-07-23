@@ -23,13 +23,14 @@ from uniques import *
 from discord_slash import SlashCommand, SlashContext
 from discord_slash.utils.manage_commands import create_option, create_choice
 
-# intents = discord.Intents.default()
-# intents.members = True
+intents = discord.Intents.default()
+intents.members = True
+intents.guilds = True
 
-# client = commands.Bot(command_prefix = "+",intents = intents)
-client = commands.Bot(command_prefix="+")
+
+client = commands.Bot(command_prefix="+", intents=intents)
 slash = SlashCommand(client, sync_commands=True)
-guild_ids=[]
+guild_ids = []
 
 activity = discord.Game(name="+new | New commands")
 
@@ -137,7 +138,10 @@ def add_playervouchers(id, value):
 
 def get_playervouchers(id):
 	global player_coins
-	return player_coins[id][1]
+	try:
+		return player_coins[id][1]
+	except:
+		return 0
 
 
 def add_playerpasses(id, value):
@@ -258,12 +262,11 @@ async def on_connect():
 	print("Bot is running")
 	await log_start()
 	log_useage.start()
-	print("Now keeping guess useage logs")
+	print("Now keeping guess usage logs")
 	await client.change_presence(activity=discord.Game(name="Have a suggestion or bug? Contact TemmieGamerGuy#3754"))
-	guild_ids=[]
+	guild_ids = []
 	for guild in client.guilds:
 		guild_ids.append(guild.id)
-	# print("Changed presence")
 	save.start()
 	suggestions.start()
 	print("Now Auto Saving")
@@ -1327,7 +1330,7 @@ async def on_raw_reaction_add(payload):
 			new_embed = discord.Embed(
 				title="Your Touhou Cards:",
 				colour=discord.Color.from_rgb(0, 255, 254),
-				description="Points: {} <:point:795490918563840011>\nVouchers: {} :tickets:".format(
+				description="Points: {} <:point:865682560490012713>\nVouchers: {} :tickets:".format(
 					player_coins[user.id][0], player_coins[user.id][1])
 			)
 
@@ -1536,12 +1539,13 @@ async def inventory(ctx, page=1):
 	global char_info
 	global player_coins
 
-	page -= 1
+
 	try:
 		page = int(page)
 	except:
 		await ctx.send(str(page) + " is not a page number")
-
+		return
+	page -= 1
 	user_chars = char_info.get(ctx.message.author.id)
 	if user_chars is None:
 		await ctx.send(
@@ -1552,7 +1556,7 @@ async def inventory(ctx, page=1):
 	inv_embed = discord.Embed(
 		title="Your Touhou Cards:",
 		colour=discord.Color.from_rgb(0, 255, 254),
-		description="Points: {} <:point:795490918563840011>\nVouchers: {} :tickets:".format(
+		description="Points: {} <:point:865682560490012713>\nVouchers: {} :tickets:".format(
 			player_coins[ctx.author.id][0], player_coins[ctx.author.id][1])
 	)
 
@@ -1645,7 +1649,7 @@ async def sell(ctx, target, *, stars=0):
 		suc_embed = discord.Embed(
 			title="Characters successfully sold:",
 			colour=discord.Color.from_rgb(0, 255, 255),
-			description="You have earned {} <:point:795490918563840011> from selling ".format(total_value) + str(
+			description="You have earned {} <:point:865682560490012713> from selling ".format(total_value) + str(
 				len(sell_chars)) + " characters."
 		)
 		await ctx.send(embed=suc_embed)
@@ -1674,7 +1678,7 @@ async def sell(ctx, target, *, stars=0):
 			suc_embed = discord.Embed(
 				title="Character successfully sold:",
 				colour=discord.Color.from_rgb(0, 255, 255),
-				description="You have earned {} <:point:795490918563840011> from selling ".format(coins) + char[2]
+				description="You have earned {} <:point:865682560490012713> from selling ".format(coins) + char[2]
 			)
 			await ctx.send(embed=suc_embed)
 
@@ -1774,7 +1778,7 @@ async def info(ctx, id=1):
 	except:
 		Power = ""
 	char_embed.add_field(
-		name="<:card:797943200907001867> - {} - {}<:power:796499186106236960>".format(card[0], card[2]),
+		name="<:card:865682533236080652> - {} - {}<:power:865682549543141437>".format(card[0], card[2]),
 		value="Priority: {}".format(card[4]) + Power + "\nDesc: {}".format(card[5]), inline=False)
 
 	try:

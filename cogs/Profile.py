@@ -105,7 +105,7 @@ class Profile(commands.Cog):
 		try:
 			cards = get_charinfo()[ctx.author.id]
 		except:
-			ctx.send("You don't own any cards. You need to get at least 1 card before displaying your profile")
+			await ctx.send("You don't own any cards. You need to get at least 1 card before displaying your profile")
 			return
 			
 		if profile[0] != -1:

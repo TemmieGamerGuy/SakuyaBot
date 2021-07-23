@@ -69,7 +69,7 @@ characters = {
 	"8-6-A"	: ["Yagokoro Eirin", "Eirin", "Yagokoro", "Eirin Yagokoro"],
 	"8-6-B"	: ["Kaguya Houraisan", "Kaguya", "Houraisan", "Houraisan Kaguya"],
 	"8-7"	: ["Fujiwara no Mokou", "Fujiwara Mokou", "Fujiwara", "Mokou", "Mokou Fujiwara"],
-	"9-1"	: ["aya shameimaru", "Shameimaru", "Aya", "Shameimaru Aya"],
+	"9-1"	: ["Aya Shameimaru", "Shameimaru", "Aya", "Shameimaru Aya"],
 	"9-2"	: ["Medicine Melancholy", "Medicine", "Melancholy"],
 	#"9-3"	: ["Kazami Yuuka", "Yuuka", "Kazami", "Yuuka Kazami"],
 	"9-4"	: ["Komachi Onozuka", "Onozuka", "Komachi", "Onozuka Komachi"],

@@ -121,7 +121,7 @@ class PvP(commands.Cog):
 			embed = discord.Embed(
 				title = "{} has won the fight".format(winner),
 				colour = discord.Color.from_rgb(0,255,0),
-				description = "Congratulations you have won {} <:point:795490918563840011>".format(coins)
+				description = "Congratulations you have won {} <:point:865682560490012713>".format(coins)
 			)
 				
 			
@@ -281,7 +281,7 @@ class PvP(commands.Cog):
 					await battle.next_command(id-1)
 
 					
-				elif str(reaction) == "<:card:797943200907001867>":#spell card
+				elif str(reaction) == "<:card:865682533236080652>":#spell card
 					card = battle.inst_card[id-1][battle.player_pointer[id-1]-1]
 					spell = card[6]
 					points = battle.points[id-1]
@@ -790,7 +790,7 @@ class Battle(spellcard_func.Spells):
 		self.msg[id] = msg
 		await msg.add_reaction(u"\u2694")
 		await msg.add_reaction(u"\U0001F6E1")
-		await msg.add_reaction("<:card:797943200907001867>")
+		await msg.add_reaction("<:card:865682533236080652>")
 	
 	def generate_command_embed(self,id):
 		#prompt for turn choice (attack, defend, spellcard)
@@ -798,13 +798,13 @@ class Battle(spellcard_func.Spells):
 		inst_card = self.inst_card[id][self.player_pointer[id]]
 		command_embed = discord.Embed(
 			title = card[2],
-			description = "Power: {} <:power:796499186106236960>".format(self.points[id]),
+			description = "Power: {} <:power:865682549543141437>".format(self.points[id]),
 			color = discord.Color.from_rgb(120,120,121+self.player_pointer[id])#change later
 		)
 		
 		command_embed.add_field(name = "\u2694 - Attack", value = "A simple attack against an opponents card",inline = False)
 		command_embed.add_field(name = "\U0001F6E1 - Defend", value = "Defend against enemy attacks. You take half the damage and gain double the power gained",inline = False)
-		command_embed.add_field(name = "<:card:797943200907001867> - {} - {}<:power:796499186106236960>.".format(inst_card[6][0],inst_card[6][2]), value = inst_card[6][5],inline = False)
+		command_embed.add_field(name = "<:card:865682533236080652> - {} - {}<:power:865682549543141437>.".format(inst_card[6][0],inst_card[6][2]), value = inst_card[6][5],inline = False)
 		
 		self.player_pointer[id]+=1#point to next card
 		return command_embed
