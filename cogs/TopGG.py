@@ -1,20 +1,21 @@
-import dbl
+import topgg
 import discord
 from discord.ext import commands, tasks
 from bot import add_playervouchers
-
+from settings import *
 import asyncio
 import logging
 
 VOUCHERS = 1
+
 
 class TopGG(commands.Cog):
 	"""Handles interactions with the top.gg API"""
 
 	def __init__(self, bot):
 		self.bot = bot
-		self.token = '' # set this to your DBL token
-		self.dblpy = dbl.DBLClient(self.bot, self.token)
+		self.token = TOPGGTOKEN # set this to your DBL token
+		self.dblpy = topgg.DBLClient(self.bot, self.token)
 		self.weekend = False
 		self.claimable = []
 		self.update_stats.start()
@@ -23,11 +24,11 @@ class TopGG(commands.Cog):
 	@tasks.loop(minutes=30.0)
 	async def update_stats(self):
 		"""This function runs every 30 minutes to automatically update your server count"""
-		# self.weekend = await self.dblpy.get_weekend_status() broken line, fix later
+		self.weekend = await self.dblpy.get_weekend_status()
 		logger.info('Attempting to post server count')
 		try:
-			#await self.dblpy.post_guild_count() ignore
-			logger.info('Posted server count ({})'.format(self.dblpy.guild_count()))
+			await self.dblpy.post_guild_count()
+			logger.info('Posted server count ({})'.format(self.dblpy.guild_count))
 		except Exception as e:
 			logger.exception('Failed to post server count\n{}: {}'.format(type(e).__name__, e))
 
@@ -43,7 +44,7 @@ class TopGG(commands.Cog):
 	
 	@commands.command(aliases = ["claim"])
 	async def vote(self, ctx):
-		'''with open("vote_info.txt", 'r+') as f:
+		with open("vote_info.txt", 'r+') as f:
 			content = f.readlines()
 			f.truncate(0)
 		
@@ -65,20 +66,24 @@ class TopGG(commands.Cog):
 			embed = discord.Embed(
 				title = "Vote For Bot",
 				colour = 0x00FF00,
-				description = "Vote for the bot at https://top.gg/bot/717160348502982729\n\nAfter voting type in +claim or +vote again to recieve a rewards voucher. You will recieve {} if you voted on the weekend. You can check if the bot recognizes that its the weekend by typing in +weekend".format(VOUCHERS*2)
+				description = "Vote for the bot at https://top.gg/bot/864237884473999382\n\nAfter voting type in +claim or +vote again to recieve a rewards voucher. You will recieve {} if you voted on the weekend. You can check if the bot recognizes that its the weekend by typing in +weekend".format(VOUCHERS*2)
 			)
 			
-			await ctx.send(embed = embed)'''
-		await ctx.send("Command currently not in use")
-		
+			await ctx.send(embed = embed)
+		#await ctx.send("Command currently not in use")
+
+	@commands.Cog.listener()
+	async def on_dbl_vote(self, data):
+		with open("vote_info.txt", 'a') as f:
+			f.write(str(data['user'])+","+str(VOUCHERS+int(data['isWeekend']))+"\n")
+
 	@commands.command()
 	async def see_vote_list(self,ctx):
 		print(self.claimable)
 		
-	@commands.command()
+	'''@commands.command()
 	async def test_vote(self,ctx):
-		self.claimable.append([ctx.author.id,VOUCHERS])
-
+		self.claimable.append([ctx.author.id,VOUCHERS])'''
 
 
 def setup(bot):

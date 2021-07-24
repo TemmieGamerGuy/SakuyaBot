@@ -1305,6 +1305,8 @@ async def on_raw_reaction_add(payload):
 		user = payload.member
 		reaction = payload.emoji
 		if author == BOT_ID:
+			if not message.embeds:
+				return
 			embed = message.embeds[0]
 			color = embed.color
 			owner = embed.author.name
@@ -1518,7 +1520,7 @@ async def server(ctx):
 	await ctx.author.send("https://discord.gg/mRpewrh")
 
 
-@slash.slash(name='suggest', description='Suggest an improvement for the bot', guild_ids=guild_ids,
+@slash.slash(name='suggest', description='Suggest an improvement for the bot',
 			 options=[
 				 create_option(
 					 name="suggestion",
@@ -1583,8 +1585,13 @@ async def inventory(ctx, page=1):
 async def favourite(ctx, id=0):
 	"""Adds a character to your favourites so they can't be accidently sold +favourite {ID}"""
 	global char_info
+	try:
+		id = int(id)
+	except:
+		await ctx.send("Please enter a valid character ID")
+		return
 	if id <= 0:
-		await ctx.send("You must specify a non-zero non-negative character id")
+		await ctx.send("You must specify a non-zero non-negative character ID")
 		return None
 	try:
 		char = char_info[ctx.message.author.id][id - 1]

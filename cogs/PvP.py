@@ -198,6 +198,8 @@ class PvP(commands.Cog):
 	@commands.Cog.listener()
 	async def on_reaction_add(self, reaction, user):
 		if reaction.message.author.id == BOT_ID and user.id != BOT_ID:
+			if not reaction.message.embeds:
+				return
 			embed = reaction.message.embeds[0]
 			color = embed.color
 			owner = embed.author.name
