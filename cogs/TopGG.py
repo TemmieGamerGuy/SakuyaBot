@@ -14,7 +14,7 @@ class TopGG(commands.Cog):
 
 	def __init__(self, bot):
 		self.bot = bot
-		self.token = TOPGGTOKEN # set this to your DBL token
+		self.token = str(TOPGGTOKEN) # set this to your DBL token
 		self.dblpy = topgg.DBLClient(self.bot, self.token)
 		self.weekend = False
 		self.claimable = []
@@ -47,9 +47,9 @@ class TopGG(commands.Cog):
 		with open("vote_info.txt", 'r+') as f:
 			content = f.readlines()
 			f.truncate(0)
-		
-		self.claimable.extend([x.strip().split(",") for x in content])
-		
+
+		self.claimable.extend([x.strip().replace("\n", "").split(",") for x in content])
+		print(str(self.claimable))
 		for id in self.claimable:
 			vote = (int(id[0]),int(id[1]))#comes in as string but i dont want to add int(id[num]) every single time i check for values
 			if ctx.author.id == vote[0]:
@@ -68,14 +68,10 @@ class TopGG(commands.Cog):
 				colour = 0x00FF00,
 				description = "Vote for the bot at https://top.gg/bot/864237884473999382\n\nAfter voting type in +claim or +vote again to recieve a rewards voucher. You will recieve {} if you voted on the weekend. You can check if the bot recognizes that its the weekend by typing in +weekend".format(VOUCHERS*2)
 			)
-			
+
 			await ctx.send(embed = embed)
 		#await ctx.send("Command currently not in use")
 
-	@commands.Cog.listener()
-	async def on_dbl_vote(self, data):
-		with open("vote_info.txt", 'a') as f:
-			f.write(str(data['user'])+","+str(VOUCHERS+int(data['isWeekend']))+"\n")
 
 	@commands.command()
 	async def see_vote_list(self,ctx):

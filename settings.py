@@ -4,6 +4,7 @@ load_dotenv()
 
 TOKEN = os.getenv('DISCORD_TOKEN')
 TOPGGTOKEN = os.getenv('TOPGGTOKEN')
+PASSWORD = os.getenv('PASSWORD')
 
 BOT_ID = 864237884473999382#Replace this with your bot's ID
 
