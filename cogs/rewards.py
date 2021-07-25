@@ -49,7 +49,7 @@ class rewards(commands.Cog):
 			embed = discord.Embed(
 				title="Command Error",
 				colour=discord.Color.from_rgb(255, 0, 0),
-				description="Couldn't load a card with the given ID number. Please double to make sure you own a card with the given ID.\nPlease message Narwaffles#0927 if this proves to be an issue"
+				description="Couldn't load a card with the given ID number. Please double to make sure you own a card with the given ID.\nPlease message TemmieGamerGuy#3754 if this proves to be an issue"
 			)
 
 			await ctx.send(embed=embed)
@@ -79,7 +79,7 @@ class rewards(commands.Cog):
 			confirm_embed = discord.Embed(
 				title="Confirm Selection",
 				colour=discord.Color.from_rgb(255, 166, 0),
-				description="<@{}> are you sure you want to change your card with ID: {} Into the below image? \nThis action can not be reversed without another Image change pass.\nClick on the green check mark to confirm.\n\nNote: If you trade this card away or sort your inventory before clicking the confirm button the image transfer may fail. Failure of transfer will result in the return of your image pass, however unforseen side effects may occur. Please message @Narwaffles#0927 if you encounter a seroius issue".format(
+				description="<@{}> are you sure you want to change your card with ID: {} Into the below image? \nThis action can not be reversed without another Image change pass.\nClick on the green check mark to confirm.\n\nNote: If you trade this card away or sort your inventory before clicking the confirm button the image transfer may fail. Failure of transfer will result in the return of your image pass, however unforseen side effects may occur. Please message @TemmieGamerGuy#3754 if you encounter a seroius issue".format(
 					ctx.author.id, ID + 1)
 			)
 
@@ -111,7 +111,7 @@ class rewards(commands.Cog):
 		embed = discord.Embed(
 			title="Command Error",
 			colour=discord.Color.from_rgb(255, 0, 0),
-			description="The following error has occured when running the change image command\n{}\nPlease message Narwaffles#0927 if this proves to be an issue".format(
+			description="The following error has occured when running the change image command\n{}\nPlease message TemmieGamerGuy#3754 if this proves to be an issue".format(
 				error)
 		)
 
@@ -171,7 +171,7 @@ class rewards(commands.Cog):
 		shop_embed.add_field(name=":one: Random Level 50 Card", value="Cost: 1 :tickets:", inline=False)
 		shop_embed.add_field(name=":two: Common Level 1 Card of Choice", value="Cost: 1 :tickets:", inline=False)
 		# shop_embed.add_field(name=":two: Common Level 1 Card of Choice",value = "WIP. Option will be available soon:tm:",inline=False)
-		shop_embed.add_field(name=":three: 200000 <:point:795490918563840011>", value="Cost: 1 :tickets:", inline=False)
+		shop_embed.add_field(name=":three: 200000 <:point:865682560490012713>", value="Cost: 1 :tickets:", inline=False)
 		shop_embed.add_field(name=":four: Image Change Pass", value="Cost: 5 :tickets:", inline=False)
 
 		shop_embed.set_image(url="attachment://" + "image.png")
@@ -200,7 +200,7 @@ class rewards(commands.Cog):
 		embed = discord.Embed(
 			title="Failed to locate character",
 			color=0xFF0000,
-			description="Failed to find a character with the name {}.\nPlease double check the spelling or let Narwaffles#0927 if there is an issue with character identification.\n\nReminder that only names that work for the main guessing game will work with this command".format(
+			description="Failed to find a character with the name {}.\nPlease double check the spelling or let TemmieGamerGuy#3754 if there is an issue with character identification.\n\nReminder that only names that work for the main guessing game will work with this command".format(
 				name)
 		)
 		await channel.send(embed=embed)
@@ -247,7 +247,7 @@ class rewards(commands.Cog):
 			msg = await ctx.send(embed=embed, file=img)
 			await msg.add_reaction(u'\u2705')
 		else:
-			await not_enough(ctx.channel)
+			await ctx.channel.send("You do not have enough vouchers to buy that")
 
 	@commands.Cog.listener()
 	async def on_reaction_add(self, reaction, user):
@@ -291,7 +291,7 @@ class rewards(commands.Cog):
 					responce = discord.Embed(
 						title="Item purchased",
 						colour=discord.Color.from_rgb(128, 0, 127),
-						description="Thank you for purchasing 200000 <:point:795490918563840011>.\n200000 <:point:795490918563840011> has been deposited into your account"
+						description="Thank you for purchasing 200000 <:point:865682560490012713>.\n200000 <:point:865682560490012713> has been deposited into your account"
 					)
 					await reaction.message.channel.send(embed=responce)
 				else:

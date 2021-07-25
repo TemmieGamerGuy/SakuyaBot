@@ -24,8 +24,6 @@ from discord_slash import SlashCommand, SlashContext
 from discord_slash.utils.manage_commands import create_option, create_choice
 
 intents = discord.Intents.default()
-intents.members = True
-intents.guilds = True
 
 
 client = commands.Bot(command_prefix="+", intents=intents)
@@ -355,7 +353,8 @@ async def help_error(ctx, error):
 @client.command()
 async def invite(ctx):
 	await ctx.send(
-		"https://discord.com/api/oauth2/authorize?client_id=864237884473999382&permissions=117824&scope=bot"
+		"https://discord.com/api/oauth2/authorize?client_id=864237884473999382&permissions=2147863616"
+		"&scope=bot%20applications.commands"
 		"%20applications.commands")
 
 
@@ -1261,10 +1260,10 @@ async def offer(ctx, id=0):
 			trade_info[1][1][1][6]) + "	| SPD: " + str(trade_info[1][1][1][7]) + "	| Rarity: " + \
 				["★☆☆☆☆", "★★☆☆☆", "★★★☆☆", "★★★★☆", "★★★★★", "★★★★★★"][trade_info[1][1][1][4] - 1]
 
-	new_embed.add_field(name=str(client.get_user(int(trade_info[0][0]))), value=line1, inline=False)
+	new_embed.add_field(name=str(await client.fetch_user(int(trade_info[0][0]))), value=line1, inline=False)
 	new_embed.add_field(name="--------------------------------------------------------------",
 						value="--------------------------------------------------------------", inline=False)
-	new_embed.add_field(name=str(client.get_user(int(trade_info[1][0]))), value=line2, inline=False)
+	new_embed.add_field(name=str(await client.fetch_user(int(trade_info[1][0]))), value=line2, inline=False)
 
 	new_embed.set_image(url="attachment://image.png")
 
@@ -1370,14 +1369,14 @@ async def on_raw_reaction_add(payload):
 									"you must either complete the trade or cancel it to start a new trade. Trade "
 									"sessions do not expire "
 					)
-					new_embed.add_field(name=str(client.get_user(int(sender))), value="Nothing",
+					new_embed.add_field(name=str(await client.fetch_user(int(sender))), value="Nothing",
 										inline=False)  # god this is so stupid. I get the user, convert it to an id
 					# and get the user info back using this command. Im too lazy to do this properly but this is just
 					# getting worse and worse
 					new_embed.add_field(name="--------------------------------------------------------------",
 										value="--------------------------------------------------------------",
 										inline=False)
-					new_embed.add_field(name=str(client.get_user(int(target))), value="Nothing", inline=False)
+					new_embed.add_field(name=str(await client.fetch_user(int(target))), value="Nothing", inline=False)
 
 					with open(bg_dir + "//" + "shit_trade_2x.png", "rb") as imagefile:
 						img = discord.File(imagefile, "image.png")
@@ -1427,8 +1426,8 @@ async def on_raw_reaction_add(payload):
 					# I swear this is going to cause problems in the future but meh. let my future self suffer for this autism
 					new_embed.description = "Trade has been completed"
 					trade_inst.remove(trade_info)  # deletes trade instance
-					# check to see if the characters being trades are still present in inventories (done separetly so
-					# no characaters are lost)
+					# check to see if the characters being trades are still present in inventories (done separately so
+					# no characters are lost)
 					try:  # Player 1
 						char_info[int(trade_info[0][0])].remove(trade_info[0][1][1])
 					except Exception as e:
@@ -1442,18 +1441,18 @@ async def on_raw_reaction_add(payload):
 					else:
 						new_embed.title = "Trade Canceled"
 						new_embed.description = "Failed to find card belonging to {}. Trade has been canceled".format(
-							str(client.get_user(int(trade_info[0][0]))))
+							str(await client.fetch_user(int(trade_info[0][0]))))
 						new_embed.color = discord.Color.from_rgb(255, 0, 0)
 					if fail2:  # give back card
 						char_info[int(trade_info[0][0])].append(trade_info[0][1][1])
 
 						new_embed.title = "Trade Canceled"
 						new_embed.description = "Failed to find card belonging to {}. Trade has been canceled".format(
-							str(client.get_user(int(trade_info[1][0]))))
+							str(await client.fetch_user(int(trade_info[1][0]))))
 						new_embed.color = discord.Color.from_rgb(255, 0, 0)
 					else:  # give each other the cards
 
-						# create new unique identifers for the cards
+						# create new unique identifiers for the cards
 						max1 = 0
 						for char in char_info[int(trade_info[0][0])]:
 							if char[10] > max1:
@@ -1604,6 +1603,22 @@ async def favourite(ctx, id=0):
 		await ctx.send("Sucessfully favourited character")
 	else:  # false
 		await ctx.send("Sucessfully unfavourited character")
+
+
+@client.command(aliases=['updates'])
+async def changelog(ctx):
+	with open("changelog.txt", "r") as f:
+		lines = []
+		for line in f:
+			line = line.replace("\n", "").split(":", 1)
+			lines.append(line)
+	lines.reverse()
+	embed = discord.Embed(title="Changelog", colour=0x000000)
+	tosend = ""
+	for line in lines:
+		tosend += line[0]+"\n"+line[1]+"\n"
+	embed.add_field(name="Changes", value=tosend)
+	await ctx.send(embed=embed)
 
 
 def xp(level):

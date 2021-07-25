@@ -163,7 +163,7 @@ class PvP(commands.Cog):
 		embed = discord.Embed(
 			title = "Command Error",
 			colour = discord.Color.from_rgb(255,0,0),
-			description = "The following error has occured when running the surrender command\n{}\nPlease message Narwaffles#0927 if this proves to be an issue".format(error)
+			description = "The following error has occured when running the surrender command\n{}\nPlease message TemmieGamerGuy#3754 if this proves to be an issue".format(error)
 		)
 		
 		await ctx.send(embed = embed)
@@ -211,7 +211,7 @@ class PvP(commands.Cog):
 					sender = embed.description.split(" ")[1]
 					sender = sender.replace("<@","").replace(">","")
 					if self.check_battles(user):
-						fight = Battle(self.client.get_user(int(sender)),user,reaction.message.channel,self)#save both users so I dont have to do anymore of that retarded shit
+						fight = Battle(await self.client.fetch_user(int(sender)),user,reaction.message.channel,self)#save both users so I dont have to do anymore of that retarded shit
 						self.battles.append(fight)
 						fightEmbed = discord.Embed(
 							title = "Choose Cards for PvP",
@@ -387,7 +387,7 @@ class PvP(commands.Cog):
 						await reaction.message.delete() #delete old message
 						if self.check_battles(user):#user is not in another battle (this includes pvp and other pve levels)
 							#start (atleast try to start) pve
-							fight = Battle(user,self.client.get_user(BOT_ID),reaction.message.channel,self,True,int(quest),int(stage))
+							fight = Battle(user,await self.client.fetch_user(BOT_ID),reaction.message.channel,self,True,int(quest),int(stage))
 							self.battles.append(fight)
 							fightEmbed = discord.Embed(
 								title = "Choose Cards for PvP",
@@ -404,7 +404,7 @@ class PvP(commands.Cog):
 								fight.user_cards[1].append(card)
 							fight.locks[1] = True
 						else:
-							await reaction.message.channel.send("You are already involved in another battle. Please finish the other battle first. If you are somehow stuck try +surrender and if you are still stuck message Narwaffles#0927")
+							await reaction.message.channel.send("You are already involved in another battle. Please finish the other battle first. If you are somehow stuck try +surrender and if you are still stuck message TemmieGamerGuy#3754")
 							return None
 							
 							
@@ -454,7 +454,7 @@ class PvP(commands.Cog):
 		embed = discord.Embed(
 			title = "Command Error",
 			colour = discord.Color.from_rgb(255,0,0),
-			description = "The following error has occured when running the select command\n{}\nPlease message Narwaffles#0927 if this proves to be an issue".format(error)
+			description = "The following error has occured when running the select command\n{}\nPlease message TemmieGamerGuy#3754 if this proves to be an issue".format(error)
 		)
 		
 		await ctx.send(embed = embed)
@@ -554,7 +554,7 @@ class PvP(commands.Cog):
 		embed = discord.Embed(
 			title = "Command Error",
 			colour = discord.Color.from_rgb(255,0,0),
-			description = "Failed to start fight due to following error\n{}\nPlease send the error message to @Narwaffles#0927 if it is a serious issue".format(error)
+			description = "Failed to start fight due to following error\n{}\nPlease send the error message to @TemmieGamerGuy#3754 if it is a serious issue".format(error)
 		)
 		
 		await ctx.send(embed = embed)
