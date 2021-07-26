@@ -108,7 +108,7 @@ class Merge(commands.Cog):
 				embed = discord.Embed(
 					title = "Command Error",
 					colour = discord.Color.from_rgb(255,0,0),
-					description = "The following error has occured when running the merge command\n{}\nPlease message Narwaffles#0927 if this proves to be an issue".format(e)
+					description = "The following error has occured when running the merge command\n{}\nPlease message TemmieGamerGuy#3754 if this proves to be an issue".format(e)
 				)
 			
 			
@@ -120,7 +120,7 @@ class Merge(commands.Cog):
 		embed = discord.Embed(
 			title = "Command Error",
 			colour = discord.Color.from_rgb(255,0,0),
-			description = "The following error has occured when running the merge command\n{}\nPlease message Narwaffles#0927 if this proves to be an issue".format(error)
+			description = "The following error has occured when running the merge command\n{}\nPlease message TemmieGamerGuy#3754 if this proves to be an issue".format(error)
 		)
 		
 		await ctx.send(embed = embed)

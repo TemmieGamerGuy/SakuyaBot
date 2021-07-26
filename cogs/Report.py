@@ -13,7 +13,7 @@ class Report(commands.Cog):
 	@commands.cooldown(2, 300, commands.BucketType.user)
 	async def report(self,ctx,*,message):
 		"""Sends a report message to the bot owner. Please write in detail what the problem is and how to replicate it if possible. This command can be used once every 5 minutes to prevent spam."""
-		send_to = self.client.get_user(self.owner) #messages will be sent to this user (me)
+		send_to = await self.client.fetch_user(self.owner) #messages will be sent to this user (me)
 		await send_to.send(str(ctx.message.author)+": "+message)
 		await send_to.send(str(ctx.message.author.id))
 		await ctx.send("Report message has been sent to bot owner. Thank you")
@@ -31,7 +31,7 @@ class Report(commands.Cog):
 	async def respond(self,ctx,user,*,message):
 		"""Bot owner only. Used to send a message back to a user who sent a report message"""
 		if ctx.message.author.id == self.owner:
-			user = self.client.get_user(int(user))
+			user = await self.client.fetch_user(int(user))
 			await user.send(message)
 			await ctx.send("Messsage sent")
 		else:

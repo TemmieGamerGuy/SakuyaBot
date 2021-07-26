@@ -1738,15 +1738,23 @@ async def info_internal(channel, owner, id):
 	char_embed.add_field(name="HP:		", value=user_chars[id][5], inline=True)
 	char_embed.add_field(name="ATK:		", value=user_chars[id][6], inline=True)
 	char_embed.add_field(name="SPD:		", value=user_chars[id][7], inline=True)
+	if not user_chars[id][1].startswith("https"):
+		directory = char_dir + "//" + user_chars[id][0]
+		imgdict = {}
+		with open(directory + "//" + "convertlist.txt", "r") as f:
+			for line in f:
+				key, value = line.rstrip().split("!!!^")
+				imgdict[key] = value
+		char_embed.set_image(url=imgdict[user_chars[id][1]])
+		user_chars[id][1] = imgdict[user_chars[id][1]]
+		char_embed.set_thumbnail(url=rare_img[user_chars[id][4] - 1])
 
-	directory = char_dir + "//" + user_chars[id][0]
-	with open(directory + "//" + user_chars[id][1], "rb") as imagefile:
-		img = discord.File(imagefile, "image" + "." + user_chars[id][1].split(".")[-1])
-	char_embed.set_image(url="attachment://" + "image" + "." + user_chars[id][1].split(".")[-1])
+		await channel.send(embed=char_embed)
+	else:
+		char_embed.set_image(url=user_chars[id][1])
 
-	char_embed.set_thumbnail(url=rare_img[user_chars[id][4] - 1])
-	await channel.send(file=img, embed=char_embed)
-
+		char_embed.set_thumbnail(url=rare_img[user_chars[id][4] - 1])
+		await channel.send(embed=char_embed)
 
 @client.command()
 async def info(ctx, id=1):
@@ -1802,35 +1810,56 @@ async def info(ctx, id=1):
 	char_embed.add_field(
 		name="<:card:865682533236080652> - {} - {}<:power:865682549543141437>".format(card[0], card[2]),
 		value="Priority: {}".format(card[4]) + Power + "\nDesc: {}".format(card[5]), inline=False)
+	if not user_chars[id][1].startswith("https"):
+		directory = char_dir + "//" + user_chars[id][0]
+		imgdict={}
+		with open(directory + "//" + "convertlist.txt", "r") as f:
+			for line in f:
+				key, value = line.rstrip().split("!!!^")
+				imgdict[key] = value
+		char_embed.set_image(url=imgdict[user_chars[id][1]])
+		user_chars[id][1] = imgdict[user_chars[id][1]]
+		char_embed.set_thumbnail(url=rare_img[user_chars[id][4] - 1])
 
-	try:
-		art_author = user_chars[id][1]
-		art_author = art_author[:art_author.rindex(".")]  # strip off .jpg / .png
-		art_author = art_author[art_author.index("(") + 1:-1]  # strip off string before bracket and remove last bracket
+		# Sends msg
+		sent_msg = await ctx.send(embed=char_embed)
+	else:
+		char_embed.set_image(url=user_chars[id][1])
 
-		char_embed.set_footer(text="Author: " + art_author)  # placed here for now. If author isn't found have no footer
-	except:
-		# Get info from list
-		# try:
-		# except:
-		art_author = "Unknown"
+		char_embed.set_thumbnail(url=rare_img[user_chars[id][4] - 1])
 
-	# char_embed.set_footer(text="Author: "+art_author)
-
-	directory = char_dir + "//" + user_chars[id][0]
-	with open(directory + "//" + user_chars[id][1], "rb") as imagefile:
-		img = discord.File(imagefile, "image" + "." + user_chars[id][1].split(".")[-1])
-	char_embed.set_image(url="attachment://" + "image" + "." + user_chars[id][1].split(".")[-1])
-
-	char_embed.set_thumbnail(url=rare_img[user_chars[id][4] - 1])
-
-	# Sends msg
-	sent_msg = await ctx.send(file=img, embed=char_embed)
+		# Sends msg
+		sent_msg = await ctx.send(embed=char_embed)
 
 
 @info.error
 async def info_error(ctx, error):
 	await ctx.send("You do not have a character with the given ID")
+
+
+@client.command()
+async def requestdatadeletion(ctx):
+	global player_save
+	global char_save
+	global char_info
+	global player_coins
+	await ctx.send("This will delete all data the bot has stored on you, are you sure you want to continue?")
+
+	def check(m):
+		if not m.content.lower().startswith("y") and not m.content.lower().startswith("n"):
+			return False
+		return m.author.id == ctx.author.id and m.channel == ctx.channel
+	try:
+		msg = await client.wait_for("message", check=check, timeout=120)
+	except:
+		return
+	if msg.content.lower().startswith("y"):
+		del player_coins[ctx.author.id]
+		del char_info[ctx.author.id]
+		del player_save[ctx.author.id]
+		await ctx.send("Data successfully deleted")
+	else:
+		await ctx.send("Deletion cancelled")
 
 
 @client.command()
@@ -1873,7 +1902,7 @@ async def guess(ctx):
 	target = random.choice(list(characters))
 	sol = characters[target]
 	directory = char_dir + "//" + target
-	image = random.choice(os.listdir(directory))
+
 	# print(sol)#for me to cheat.
 
 	# Gets character guess rate. Creates new item if it doesnt exist
@@ -1891,13 +1920,19 @@ async def guess(ctx):
 	)
 	guess_msg.set_footer(text="This character has a " + str(int(score[0] / score[1] * 100)) + "% guess rate")
 
-	with open(directory + "//" + image, "rb") as imagefile:
-		img = discord.File(imagefile, "image" + "." + image.split(".")[-1])
+	if "imagelist.txt" not in os.listdir(directory):
+		image = random.choice(os.listdir(directory))
+		with open(directory + "//" + image, "rb") as imagefile:
+			img = discord.File(imagefile, "image" + "." + image.split(".")[-1])
 
-	guess_msg.set_image(url="attachment://" + "image" + "." + image.split(".")[-1])
-
-	# Sends msg
-	sent_msg = await ctx.send(file=img, embed=guess_msg)
+		guess_msg.set_image(url="attachment://" + "image" + "." + image.split(".")[-1])
+		sent_msg = await ctx.send(file=img, embed=guess_msg)
+	else:
+		with open(directory+'//imagelist.txt', "r") as f:
+			lines = [line.rstrip() for line in f]
+		image = random.choice(lines)
+		guess_msg.set_image(url=image)
+		sent_msg = await ctx.send(embed=guess_msg)
 
 	# Checks if message send is the same as an item in the solution
 	def check(m):
@@ -1967,6 +2002,135 @@ async def guess_error(ctx, error):
 	# print(error)
 	await ctx.send("Bot has raised the error:\n`" + str(
 		error) + "`\nPlease send the error message to TemmieGamerGuy#3754 if its not a cooldown error")
+
+
+@client.command()
+@commands.cooldown(10, 15, commands.BucketType.user)
+async def forceguess(ctx, character):
+	if ctx.author.id != OWNER_ID:
+		return
+	"""Guess the touhou character posted! Keeps score of successful player guesses as the guess rate of characters"""
+	global guess_inst
+	global player_save
+	global char_save
+	global char_info
+	global player_coins
+	global guess_counter
+	global correct_counter
+
+	if ctx.channel.id in guess_inst:  # checks if channel is in list of active guess instances
+		await ctx.send(
+			"Guess instance already active, please wait until previous instance ends until starting a new one.")
+		return None
+	else:
+		guess_inst.append(ctx.channel.id)  # adds channel to list of active guess instances
+
+	guess_counter += 1  # ran the command
+
+	# gets some info and picks character to use
+	target = character
+	sol = characters[target]
+	directory = char_dir + "//" + target
+
+	# print(sol)#for me to cheat.
+
+	# Gets character guess rate. Creates new item if it doesnt exist
+	try:
+		score = char_save[target]
+	except Exception as e:
+		score = [0, 1]
+		char_save[target] = score
+
+	# create embed to send
+	guess_msg = discord.Embed(
+		title="Guess Character",
+		description="Guess who this character is in the next 15 seconds!",
+		colour=discord.Color.from_rgb(144, 238, 144)
+	)
+	guess_msg.set_footer(text="This character has a " + str(int(score[0] / score[1] * 100)) + "% guess rate")
+
+	if "imagelist.txt" not in os.listdir(directory):
+		image = random.choice(os.listdir(directory))
+		with open(directory + "//" + image, "rb") as imagefile:
+			img = discord.File(imagefile, "image" + "." + image.split(".")[-1])
+
+		guess_msg.set_image(url="attachment://" + "image" + "." + image.split(".")[-1])
+		sent_msg = await ctx.send(file=img, embed=guess_msg)
+	else:
+		with open(directory+'//imagelist.txt', "r") as f:
+			lines = [line.rstrip() for line in f]
+		image = random.choice(lines)
+		guess_msg.set_image(url=image)
+		sent_msg = await ctx.send(embed=guess_msg)
+
+	# Checks if message send is the same as an item in the solution
+	def check(m):
+		if m.channel == ctx.channel:
+			for i in sol:
+				if i.lower() in m.content.lower():
+					return True
+
+		return False
+
+	try:
+		msg = await client.wait_for('message', timeout=15, check=check)
+		await ctx.send(content='<@' + str(msg.author.id) + '>' + " guessed correctly! The character name is " + sol[0])
+
+		correct_counter += 1  # Correct guess counts
+
+		score = [score[0] + 1, score[1] + 1]
+
+		# create character to save
+
+		try:
+			max = 0
+			for char in char_info[msg.author.id]:
+				try:
+					if char[10] > max:
+						max = char[10]
+				except Exception as e:
+					pass
+			new_char = generate_char(target, image, max + 1)
+		except:
+			new_char = generate_char(target, image, 1)
+
+		try:  # Score
+			player_save[msg.author.id] += 1
+		except Exception as e:
+			player_save[msg.author.id] = 1
+
+		try:  # Coins
+			player_coins[msg.author.id][0] += PTS_PER_GUESS
+		except Exception as e:
+			player_coins[msg.author.id] = [PTS_PER_GUESS, 0, 0]
+
+		try:  # Cards
+			char_info[msg.author.id].append(new_char)
+		except Exception as e:
+			char_info[msg.author.id] = [new_char]
+
+	except Exception as e:
+		# print(e)
+		await ctx.send(
+			content="Uh oh! Looks like you're all out of time. Better luck next time\nThe Characters name is " + sol[0])
+		score = [score[0], score[1] + 1]
+
+	# await ctx.send("This character has a " + str(int(score[0]/score[1] * 100)) +"% guess rate")
+
+	char_save[target] = score
+	while ctx.channel.id in guess_inst: guess_inst.remove(
+		ctx.channel.id)  # Remove all instances of channel id in guess_inst for use next time command is called
+
+
+@client.command()
+async def add(ctx):
+	if ctx.author.id != OWNER_ID:
+		return
+	if ctx.guild.id != 856629226333929472:
+		return
+	imglink = ctx.message.attachments[0].url
+	with open(char_dir+"//"+str(ctx.channel.name)+"//imagelist.txt", "a") as f:
+		f.write("\n"+imglink)
 
 
 for filename in os.listdir('./cogs'):
