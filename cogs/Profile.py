@@ -2,6 +2,7 @@ import discord, requests, io
 from discord.ext import commands, tasks
 from bot import solve_font, save_obj, load_obj, get_playersave, get_charinfo, get_playercoins, get_pvp, get_tradecount
 from PIL import Image, ImageFont, ImageDraw
+from urllib.request import Request, urlopen
 
 bg = "./BGs/Profile"
 char_dir = ".//touhoushit"
@@ -151,7 +152,14 @@ class Profile(commands.Cog):
 		if card_data != -1:
 			bgDraw.text((10,100),"Featured Card",(255,255,255),font=font_bold)
 			bgDraw.text((10,150),card_data[2],(255,255,255),font=font)
-			card_im = Image.open(char_dir+"/"+card_data[0]+"/"+card_data[1])
+			if not card_data[1].startswith('https'):
+				card_im = Image.open(char_dir+"/"+card_data[0]+"/"+card_data[1])
+			else:
+				req = Request(
+					card_data[1],
+					headers={'User-Agent': 'Mozilla/5.0'})
+
+				card_im = Image.open(urlopen(req))
 			
 			bg_im_x = im_x - (400//16)
 			bg_im_y = im_y - (600//16)

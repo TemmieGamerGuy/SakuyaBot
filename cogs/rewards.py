@@ -262,7 +262,9 @@ class rewards(commands.Cog):
 					char = random.choice(list(characters))
 					add_playervouchers(user.id, -1)
 					directory = char_dir + "//" + char
-					image_name = random.choice(os.listdir(directory))
+					with open(directory + '//imagelist.txt', "r") as f:
+						lines = [line.rstrip() for line in f]
+					image_name = random.choice(lines)
 					index = create_card(user.id, char, image_name, 50, [40, 30, 20, 8, 2])
 
 					responce = discord.Embed(
@@ -314,7 +316,9 @@ class rewards(commands.Cog):
 					if vouchers >= 1:
 						add_playervouchers(user.id, -1)
 						directory = char_dir + "//" + char
-						image_name = random.choice(os.listdir(directory))
+						with open(directory + '//imagelist.txt', "r") as f:
+							lines = [line.rstrip() for line in f]
+						image_name = random.choice(lines)
 						index = create_card(user.id, char, image_name, 1, [100, 0, 0, 0, 0])
 						responce = discord.Embed(
 							title="Item purchased",
@@ -324,7 +328,7 @@ class rewards(commands.Cog):
 						await reaction.message.channel.send(embed=responce)
 						await info_internal(reaction.message.channel, user.id, index)
 					else:
-						not_enough(reaction.message.channel)
+						await reaction.message.channel.send("Not enough vouchers")
 
 			elif color == discord.Colour(16754176) and str(reaction) == u'\u2705':  # check mark for image change
 				target = embed.description.split(" ")[0]
