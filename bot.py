@@ -24,6 +24,7 @@ from discord_slash import SlashCommand, SlashContext
 from discord_slash.utils.manage_commands import create_option, create_choice
 import sqlite3
 from urllib.request import Request, urlopen
+from discord_components import DiscordComponents, Button
 
 intents = discord.Intents.default()
 
@@ -68,7 +69,7 @@ def load_obj(name):
 char_save = load_obj("Char_save")
 player_save = load_obj("Player_save")
 char_info = {}
-c.execute("SELECT * FROM char_info")
+c.execute("SELECT * FROM char_info_encr")
 rows = c.fetchall()
 for row in rows:
     if row[0] not in char_info:
@@ -276,6 +277,7 @@ async def log_start():
 async def on_connect():
     global guild_ids
     print("Bot is running")
+    DiscordComponents(client)
     await log_start()
     log_useage.start()
     print("Now keeping guess usage logs")
@@ -984,10 +986,10 @@ async def quit(ctx):
     if ctx.message.author.id == OWNER_ID:
         save_obj(player_save, "Player_save")
         save_obj(char_save, "Char_save")
-        c.execute("DELETE FROM char_info")
+        c.execute("DELETE FROM char_info_encr")
         for user in char_info:
             for card in char_info[user]:
-                c.execute("INSERT INTO char_info Values(?,?,?,?,?,?,?,?,?,?,?,?)", (
+                c.execute("INSERT INTO char_info_encr Values(?,?,?,?,?,?,?,?,?,?,?,?)", (
                     user, card[0], card[1], card[2], card[3], card[4], card[5], card[6], card[7], int(card[8]), card[9],
                     card[10]))
         conn.commit()
@@ -1075,7 +1077,10 @@ async def create_error(ctx, error):
 def create_card(user, character, image, lvl,
                 weights=[70, 20, 7, 2, 1]):  # Non command version of create (kinda?). Used for rewards from shop
     global char_info
-    max = len(char_info[int(user)]) + 1
+    try:
+        max = len(char_info[int(user)]) + 1
+    except KeyError:
+        max = 1
     card = generate_char(character, image, max, lvl, weights)
     try:
         char_info[int(user)].append(card)
@@ -1156,7 +1161,7 @@ def generate_trade_img(img1=None, img2=None):  # generates trade image with spri
         bgDraw.text((38, 349 - int(size[1] / 2)), "HP {}  ATK {}  SPD {}".format(img1[5], img1[6], img1[7]), font=font)
 
     if img2 is not None:
-        if not img1[1].startswith('http'):
+        if not img2[1].startswith('http'):
             im2 = Image.open(char_dir + "//" + img2[0] + "//" + img2[1])
         else:
             req = Request(img2[1], headers={'User-Agent': 'Mozilla/5.0'})
@@ -1638,7 +1643,13 @@ async def favourite(ctx, id=0):
 
 
 @client.command(aliases=['updates'])
-async def changelog(ctx):
+async def changelog(ctx, page=1):
+    try:
+        page=int(page)
+    except:
+        return
+    if page<1:
+        return
     with open("changelog.txt", "r") as f:
         lines = []
         for line in f:
@@ -1647,9 +1658,17 @@ async def changelog(ctx):
     lines.reverse()
     embed = discord.Embed(title="Changelog", colour=0x000000)
     tosend = ""
+    counter=0
     for line in lines:
-        tosend += line[0] + "\n" + line[1] + "\n"
+        if len(tosend+line[0] + "\n" + line[1] + "\n") <1024:
+            tosend += line[0] + "\n" + line[1] + "\n"
+        else:
+            counter+=1
+            if counter<page:
+                tosend = ""
+                tosend += line[0] + "\n" + line[1] + "\n"
     embed.add_field(name="Changes", value=tosend)
+    embed.set_footer(text="Page "+ str(page))
     await ctx.send(embed=embed)
 
 

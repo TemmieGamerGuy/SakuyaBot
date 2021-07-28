@@ -5,6 +5,8 @@ from bot import get_charinfo, put_charinfo, get_playercoins, add_playercoins, ad
 	get_playervouchers, get_playerpasses, info_internal, create_card
 from settings import *
 from char_list import *
+from discord_components import Button
+
 
 char_dir = ".//touhoushit"
 
@@ -30,7 +32,7 @@ class rewards(commands.Cog):
 
 	@commands.command()
 	@commands.cooldown(10, 600, commands.BucketType.user)
-	async def change_image(self, ctx, ID: int, Image=0):
+	async def change_image(self, ctx, ID: int):
 		char_info = get_charinfo()[ctx.author.id]
 		ID -= 1
 
@@ -56,56 +58,21 @@ class rewards(commands.Cog):
 			return
 
 		char_name = card[0]
-
-		if Image == 0:
-			for i, image_dir in enumerate(os.listdir(char_dir + "//" + char_name)):
-				with open(char_dir + "//" + char_name + "//" + image_dir, "rb") as imagefile:
-					image = discord.File(imagefile, "image" + "." + image_dir.split(".")[-1])
-				await ctx.send(i + 1, file=image)
-
-			embed = discord.Embed(
-				title="Select Image",
-				colour=discord.Color.from_rgb(0, 255, 0),
-				description="Type in +change_image {ID} {Image Number}\nto change your character's image.\nNote that this requires and consumes an image change pass"
-			)
-
-			await ctx.send(embed=embed)
-		else:
-			# Change image here
-			Image -= 1
-			img_list = os.listdir(char_dir + "//" + char_name)  # get list of images
-
-			# add confirm message and check for ticket
-			confirm_embed = discord.Embed(
-				title="Confirm Selection",
-				colour=discord.Color.from_rgb(255, 166, 0),
-				description="<@{}> are you sure you want to change your card with ID: {} Into the below image? \nThis action can not be reversed without another Image change pass.\nClick on the green check mark to confirm.\n\nNote: If you trade this card away or sort your inventory before clicking the confirm button the image transfer may fail. Failure of transfer will result in the return of your image pass, however unforseen side effects may occur. Please message @TemmieGamerGuy#3754 if you encounter a seroius issue".format(
-					ctx.author.id, ID + 1)
-			)
-
-			confirm_embed.set_image(url="attachment://" + "image" + "." + img_list[Image].split(".")[-1])
-			confirm_embed.set_author(icon_url=ctx.author.avatar_url, name=ctx.author)
-			confirm_embed.set_footer(text="{}:{}:{}".format(ID, Image, card[10]))
-
-			try:
-				target_image = img_list[Image]
-			except:
-				embed = discord.Embed(
-					title="Command Error",
-					colour=discord.Color.from_rgb(255, 0, 0),
-					description="The Value you inputed for Image is not within the valid range for the character requested. Please try again with a valid Image number"
-				)
-
-				await ctx.send(embed=embed)
-				return
-
-			with open(char_dir + "//" + char_name + "//" + target_image, "rb") as imagefile:
-				image_file = discord.File(imagefile, "image" + "." + target_image.split(".")[-1])
-				msg = await ctx.send(file=image_file, embed=confirm_embed)
-
-			await msg.add_reaction(u'\u2705')  # Check mark
-			await msg.add_reaction(u"\u274C")  # X mark
-
+		directory = char_dir + "//" + char_name
+		with open(directory + '//imagelist.txt', "r") as f:
+			lines = [line.rstrip() for line in f]
+		image = lines[0]
+		embed = discord.Embed(
+			title="Select Image",
+			colour=discord.Color.from_rgb(0, 255, 0),
+			description='<@!'+str(ctx.author.id)+">'s Image Change for ID: "+str(ID+1)
+		)
+		embed.add_field(name=characters[char_name][0]+" - "+char_name, value='1/'+str(len(lines)))
+		embed.set_image(url=image)
+		await ctx.send(embed=embed, components=[[
+			Button(emoji="⬅️", id="leftimageselect"),
+			Button(emoji="✔️", id="checkimageselect"),
+			Button(emoji="➡️", id="rightimageselect")]])
 	@change_image.error
 	async def change_image_error(self, ctx, error):
 		embed = discord.Embed(
@@ -401,6 +368,65 @@ class rewards(commands.Cog):
 					await reaction.message.channel.send(embed=embed)
 					return
 
+	@commands.Cog.listener()
+	async def on_button_click(self, interaction):
+		if interaction.responded:
+			return
+		user = interaction.user
+		message = interaction.message
+		embed = message.embeds[0]
+		if message.author.id != BOT_ID:
+			return
+		if embed.title != "Select Image":
+			return
+		userid = int(embed.description.split('>', 1)[0].replace('<@',"").replace('!',''))
+		if user.id != userid:
+			return
+		if interaction.component.id == 'leftimageselect':
+			char_name = embed.fields[0].name.split(" - ")[1]
+			directory = char_dir + "//" + char_name
+			with open(directory + '//imagelist.txt', "r") as f:
+				lines = [line.rstrip() for line in f]
+			imgnum = int(embed.fields[0].value.split('/')[0])
+			if imgnum == 1:
+				imgnum = len(lines)
+			else:
+				imgnum-=1
+			image = lines[imgnum-1]
+			embed.set_field_at(0, name=embed.fields[0].name, value=str(imgnum)+'/'+str(len(lines)))
+			embed.set_image(url=image)
+		elif interaction.component.id == 'rightimageselect':
+			char_name = embed.fields[0].name.split(" - ")[1]
+			directory = char_dir + "//" + char_name
+			with open(directory + '//imagelist.txt', "r") as f:
+				lines = [line.rstrip() for line in f]
+			imgnum = int(embed.fields[0].value.split('/')[0])
+			if imgnum == len(lines):
+				imgnum = 1
+			else:
+				imgnum += 1
+			image = lines[imgnum-1]
+			embed.set_field_at(0, name=embed.fields[0].name, value=str(imgnum)+'/'+str(len(lines)))
+			embed.set_image(url=image)
+		elif interaction.component.id == 'checkimageselect':
+			if get_playerpasses(userid) >= 1:
+				add_playerpasses(userid, -1)
+				char_name = embed.fields[0].name.split(" - ")[1]
+				directory = char_dir + "//" + char_name
+				with open(directory + '//imagelist.txt', "r") as f:
+					lines = [line.rstrip() for line in f]
+				imgnum = int(embed.fields[0].value.split('/')[0])
+				char_info = get_charinfo()[userid]
+				char_info[int(embed.description.split('ID: ')[1])-1][1] = lines[imgnum-1]
+				put_charinfo(userid, char_info)
+				embed = discord.Embed(title='Image Changed', colour=0x80c904)
+				embed.set_image(url=lines[imgnum-1])
+				await message.edit(components=[])
+			else:
+				await interaction.respond(content="You do not have an image change pass to do that")
+				return
+		await message.edit(embed=embed)
+		await interaction.respond(type=6)
 
 def setup(client):
 	client.add_cog(rewards(client))

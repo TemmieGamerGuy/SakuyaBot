@@ -4,7 +4,7 @@ from discord.ext.commands.cooldowns import BucketType
 from bot import put_class,get_tradeinst,get_charsave,get_playersave,get_charinfo,get_playercoins,add_playercoins,load_obj,save_obj,get_achievements,new_pve_user,set_completion
 from PIL import Image, ImageFont, ImageDraw
 from importlib import reload  
-
+from urllib.request import Request, urlopen
 from spellcards import *
 from settings import *
 import PvE
@@ -196,22 +196,29 @@ class PvP(commands.Cog):
 			battle.points[id-1] += 100
 
 	@commands.Cog.listener()
-	async def on_reaction_add(self, reaction, user):
-		if reaction.message.author.id == BOT_ID and user.id != BOT_ID:
-			if not reaction.message.embeds:
+	async def on_raw_reaction_add(self, payload):
+		channel = self.client.get_channel(payload.channel_id)
+		message = await channel.fetch_message(payload.message_id)
+		author = message.author.id
+		user = payload.user_id
+		user = await self.client.fetch_user(int(user))
+		reaction = payload.emoji
+		if author == BOT_ID and user.id != BOT_ID:
+			if not message.embeds:
+				print("no embed")
 				return
-			embed = reaction.message.embeds[0]
+			embed = message.embeds[0]
 			color = embed.color
 			owner = embed.author.name
 			if color == discord.Colour(16776961) and str(reaction) == u'\u2705':#react to fight request
 				target = embed.description.split(",")[0]
 				target = target.replace("<@","").replace(">","")
 				if target == str(user.id):#person who reacted is the person being requested
-					await reaction.message.delete()
+					await message.delete()
 					sender = embed.description.split(" ")[1]
 					sender = sender.replace("<@","").replace(">","")
 					if self.check_battles(user):
-						fight = Battle(await self.client.fetch_user(int(sender)),user,reaction.message.channel,self)#save both users so I dont have to do anymore of that retarded shit
+						fight = Battle(await self.client.fetch_user(int(sender)),user,channel,self)#save both users so I dont have to do anymore of that retarded shit
 						self.battles.append(fight)
 						fightEmbed = discord.Embed(
 							title = "Choose Cards for PvP",
@@ -224,7 +231,7 @@ class PvP(commands.Cog):
 
 						fight.msg = [msg1,msg2]
 					else:
-						await reaction.message.channel.send("One of the users involved in the battle is already in a battle.")
+						await channel.send("One of the users involved in the battle is already in a battle.")
 						return None
 
 			elif color == discord.Colour(65281) and str(reaction) == u'\u2705':#lock character choices
@@ -257,7 +264,7 @@ class PvP(commands.Cog):
 						await user.send("The Shrine Tank can't attack without being loaded")	
 						return#im going to regret putting this here in the future but i dont care for now. Sorry to me in advance jk enjoy fixing this mess lmao
 							
-					await reaction.message.delete()
+					await message.delete()
 					
 					
 					battle.waiting_target[id-1] = [card,"atk",None,10,id-1]
@@ -275,7 +282,7 @@ class PvP(commands.Cog):
 					
 					
 				elif str(reaction) == u"\U0001F6E1":#defend
-					await reaction.message.delete()
+					await message.delete()
 					card = battle.inst_card[id-1][battle.player_pointer[id-1]-1]
 					battle.actionBar.append([card,"def",None,5,id-1])
 					
@@ -289,7 +296,7 @@ class PvP(commands.Cog):
 					points = battle.points[id-1]
 					if points >= spell[2]:#cost of spell
 						battle.points[id-1] -= spell[2]#remove cost of spell from points
-						await reaction.message.delete()#Spell can be cast. Remove last msg
+						await message.delete()#Spell can be cast. Remove last msg
 
 						if spell[3]:#is a targeting spell
 							battle.waiting_target[id-1] = [card,"spell",None,spell[4],id-1]
@@ -321,7 +328,7 @@ class PvP(commands.Cog):
 					action[2] = (pointer,2)
 				
 				#delete old msg
-				await reaction.message.delete()
+				await message.delete()
 				
 				#Add code to Check If this is an attack move check for speed to calc how many times you attack. Note to self. Priority exists
 				battle.actionBar.append(action)
@@ -342,7 +349,7 @@ class PvP(commands.Cog):
 				
 				ldict = {"user":user,"level_data":level_data}
 				exec("a = PvE."+QUEST_LIST[num][0]+"_display(user,level_data)",globals(),ldict)#I love and hate this so much
-				msg = await reaction.message.channel.send(embed=ldict["a"])
+				msg = await channel.send(embed=ldict["a"])
 				
 				for i in range(QUEST_LIST[num][1]):#add reactions
 					await msg.add_reaction(str(i+1)+"\u20E3")
@@ -363,15 +370,15 @@ class PvP(commands.Cog):
 						color = 0xFF0000,
 						description = "Sorry {}, you do not meet the prerequisites for this stage. Please try a different stage or make sure you meet the prerequisites".format(user)
 					)
-					await reaction.message.channel.send(embed = embed)
+					await channel.send(embed = embed)
 					return
 				
 				#User does meet prereqs (Im not doing an else cause i dont want to indent again ok. shut up its already bad enough with all the ifs and elifs)
 				exec("a = PvE."+QUEST_LIST[quest_num][0]+"_preview(level,user)",globals(),ldict)
 				if type(ldict["a"]) != discord.Embed:
-					await reaction.message.channel.send(str(ldict["a"]))
+					await channel.send(str(ldict["a"]))
 				else:
-					msg = await reaction.message.channel.send(embed = ldict["a"])
+					msg = await channel.send(embed = ldict["a"])
 					await msg.add_reaction(u'\u2705')
 					await msg.add_reaction(u'\u274C')
 				
@@ -384,10 +391,10 @@ class PvP(commands.Cog):
 				if str(user.id) == target:#Person who clicked is indeed the intented user
 				
 					if str(reaction) == u'\u2705':#Check mark
-						await reaction.message.delete() #delete old message
+						await message.delete() #delete old message
 						if self.check_battles(user):#user is not in another battle (this includes pvp and other pve levels)
 							#start (atleast try to start) pve
-							fight = Battle(user,await self.client.fetch_user(BOT_ID),reaction.message.channel,self,True,int(quest),int(stage))
+							fight = Battle(user,await self.client.fetch_user(BOT_ID),channel,self,True,int(quest),int(stage))
 							self.battles.append(fight)
 							fightEmbed = discord.Embed(
 								title = "Choose Cards for PvP",
@@ -395,7 +402,7 @@ class PvP(commands.Cog):
 								description = "Select 3 cards to fight with.\nUse +select {ID} to pick a card.\nUse +remove to clear previous card selection"
 							)
 							
-							msg = await reaction.message.channel.send(embed=fightEmbed)
+							msg = await channel.send(embed=fightEmbed)
 							fight.msg = [msg,None]
 							
 							ldict = {"level":int(stage)}
@@ -404,7 +411,7 @@ class PvP(commands.Cog):
 								fight.user_cards[1].append(card)
 							fight.locks[1] = True
 						else:
-							await reaction.message.channel.send("You are already involved in another battle. Please finish the other battle first. If you are somehow stuck try +surrender and if you are still stuck message TemmieGamerGuy#3754")
+							await channel.send("You are already involved in another battle. Please finish the other battle first. If you are somehow stuck try +surrender and if you are still stuck message TemmieGamerGuy#3754")
 							return None
 							
 							
@@ -414,7 +421,7 @@ class PvP(commands.Cog):
 							color = 0xFF0000,
 							description = "The fight has been cancelled")
 							
-						await reaction.message.edit(embed = embed)
+						await message.edit(embed = embed)
 	@commands.command()
 	async def select(self, ctx, ID):
 		"""choose card for pvp. Only usuable when prompted by bot to use it"""
@@ -597,6 +604,7 @@ class PvP(commands.Cog):
 class Battle(spellcard_func.Spells):
 	def __init__(self,user1,user2,channel,PvP,PvE = False,quest=0,stage=0):
 		"""ngl I just kept adding stuff on and it ended up being this mess. Sorry to my future self"""
+		# I hate this
 		self.user1 = user1
 		self.user2 = user2
 		self.users = [self.user1,self.user2]
@@ -835,7 +843,11 @@ class Battle(spellcard_func.Spells):
 			x = 100
 			for j,card in enumerate(player):
 				try:
-					im = Image.open(char_folder+"//"+card[0]+"//"+card[1])
+					if not card[1].startswith('http'):
+						im = Image.open(char_folder+"//"+card[0]+"//"+card[1])
+					else:
+						req = Request(card[1], headers={'User-Agent': 'Mozilla/5.0'})
+						im = Image.open(urlopen(req))
 				except:
 					x+=300
 					continue

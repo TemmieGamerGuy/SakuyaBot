@@ -49,9 +49,10 @@ help_data = {
 "weekend" : [0,"+weekend","Lets you know if the bot thinks its the weekend for double reward vouchers"],
 "adventure":[0,"+adventure/+fight @SakuyaBot","Starts up a single player fight against an AI. A menu will appear letting you select your desired level and difficulty"],
 "invite":[0,"+invite","Send an invite link to add sakuya bot to a server"],
-"filter":[0,"+filter [*FILTERS]","A command that lets you view all the cards you own through filters.\nYou may filter using only the accpeted filters and operators seen below. Note that this command is NOT case sensitive and will treat everything you input as lowercase. You may use as many or as little filters as you wish per command. But note that there is a limit of max 200 results per search\nAccepted Filters:\nLEVEL (level,lvl,lv)\nNAME (name,character,char)\nNICK (nickname,nick,alias)\n RARITY (rarity,star)\nHP (hp,health,hitpoints)\nATK (atk,strength,power,attack)\nSPD (spd,speed)\nFAVOURITE (fav,favourite,favorite)\nAccepted Operators (One per filter): > (greater than), < (less than), = (equals), & (and symbol. Add another filter)\nAccepted values (What comes after the operators):\n Numbers (for level,rarity,hp,atk, and spd)\nAny text (For name and nick only)\nBooleans (For favourity only) (The following will be treated as booleans True: true, t, y, yes | False: false, f, n, no) \nHere are some examples\n+filter lvl>80 & fav=false\n+filter name=reimu & rarity<3\n+filter name=sakuya & lvl>50 & fav=false & rarity>4",1],
+"filter":[0,"+filter [*FILTERS]","A command that lets you view all the cards you own through filters.\nYou may filter using only the accepted filters and operators seen below. Note that this command is NOT case sensitive and will treat everything you input as lowercase. You may use as many or as little filters as you wish per command. But note that there is a limit of max 200 results per search\nAccepted Filters:\nLEVEL (level,lvl,lv)\nNAME (name,character,char)\nNICK (nickname,nick,alias)\n RARITY (rarity,star)\nHP (hp,health,hitpoints)\nATK (atk,strength,power,attack)\nSPD (spd,speed)\nFAVOURITE (fav,favourite,favorite)\nAccepted Operators (One per filter): > (greater than), < (less than), = (equals), & (and symbol. Add another filter)\nAccepted values (What comes after the operators):\n Numbers (for level,rarity,hp,atk, and spd)\nAny text (For name and nick only)\nBooleans (For favourity only) (The following will be treated as booleans True: true, t, y, yes | False: false, f, n, no) \nHere are some examples\n+filter lvl>80 & fav=false\n+filter name=reimu & rarity<3\n+filter name=sakuya & lvl>50 & fav=false & rarity>4",1],
 "changelog" : [0,"+changelog","See the latest updates for the bot"],
 "merge all" : [0,"+merge all","Does all possible card merges for you"],
+"requestdatadeletion" : [0,"+requestdatadeletion","Deletes all data the bot has stored on you"],
 "hp":[2,"Hitpoints, if a card's hitpoints reaches 0 they will die. Once all cards on one side has died the other side will win"],
 "atk":[2,"Attack power. The higher this number is the more damage you will deal."],
 "spd":[2,"Speed. Determines who will attack first within the same priority bracket"],
@@ -68,9 +69,9 @@ help_data = {
 "trading" : [1,"Exchange touhou cards with other players",["trade","offer"]],
 "pvp" : [1,"Fight using your touhou cards with other players or the bot for coin rewards",["adventure","fight","surrender","select","remove"]],
 "combat" : [1,"Information about how mechanics in PvP/Combat of SakuyaBot Work",["hp","atk","spd","power","priority","level","rarity","defending","spell cards","status","status2","status3"]],
-"misc" : [1,"Commands that do not fit in other categories",["help","ping","8ball","server","report"]],
+"misc" : [1,"Commands that do not fit in other categories",["help","ping","8ball","server","report","requestdatadeletion"]],
 "rewards" :[1,"Things releated to rewards vouchers",["daily","vote","shop"]],
-"new" : [1,"New commands recently added to the bot",["filter","adventure","sort","changelog","merge all"]]
+"new" : [1,"New commands recently added to the bot",["filter","adventure","sort","changelog","merge all","requestdatadeletion"]]
 }
 #0 = Command
 #1 = Category
