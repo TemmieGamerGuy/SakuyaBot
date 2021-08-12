@@ -8,6 +8,8 @@ import os
 import pickle
 import random
 import re
+
+import discord_components
 from PIL import Image, ImageFont, ImageDraw
 from base_stats import *
 from char_list import *
@@ -47,7 +49,6 @@ guess_inst = []
 trade_inst = []
 PvP_class = None
 
-
 char_dir = ".//touhoushit"
 rarity_dir = ".//Rarities"
 bg_dir = ".//BGs"
@@ -75,7 +76,8 @@ for row in rows:
     if row[0] not in char_info:
         char_info[row[0]] = []
     char_info[row[0]].append(
-        [row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], bool(row[9]), row[10], row[11]])
+        [row[1], row[2], row[3], int(row[4]), int(row[5]), int(row[6]), int(row[7]), int(row[8]), bool(row[9]),
+         int(row[10]), int(row[11])])
 
 player_coins = load_obj("Coin_info")
 trade_count = load_obj("Trade_count")
@@ -238,8 +240,8 @@ async def save():
     for user in char_info:
         for card in char_info[user]:
             c.execute("INSERT INTO char_info Values(?,?,?,?,?,?,?,?,?,?,?,?)", (
-                user, card[0], card[1], card[2], card[3], card[4], card[5], card[6], card[7], int(card[8]), card[9],
-                card[10]))
+                user, card[0], card[1], card[2], card[3], str(card[4]), str(card[5]), str(card[6]), str(card[7]),
+                int(card[8]), str(card[9]), str(card[10])))
     conn.commit()
 
     save_obj(player_coins, "Coin_info")
@@ -633,7 +635,7 @@ async def feed_coin(ctx, char, ID, amount):
     if coins_owned < amount:
         await ctx.send("You do not have enough coins")
         return None
-    elif char[3] >= LEVEL_CAP:
+    elif char[3] >= LEVEL_CAP and ctx.author.id != OWNER_ID:
         await ctx.send("This card is already at the level cap and cannot be fed points")
         return None
     elif coins_owned is None:
@@ -667,7 +669,7 @@ async def feed_coin(ctx, char, ID, amount):
 
     level = char[3]
 
-    while current_xp >= xp_toLvl and level + lvlUp < LEVEL_CAP:  # Have points to feed and is not above level cap
+    while current_xp >= xp_toLvl and (level + lvlUp < LEVEL_CAP or ctx.author.id == OWNER_ID):  # Have points to feed and is not above level cap
         current_xp -= xp_toLvl
         char[3] += 1
         lvlUp += 1
@@ -676,7 +678,7 @@ async def feed_coin(ctx, char, ID, amount):
         inc_SPD += base[2] + random.randint(-2, 2) + (char[4] - 1)
         xp_toLvl = xp(char[3])
 
-    if level + lvlUp >= LEVEL_CAP:
+    if level + lvlUp >= LEVEL_CAP and ctx.author.id != OWNER_ID:
         player_coins[ctx.author.id][0] += current_xp
         current_xp = 0
 
@@ -688,6 +690,8 @@ async def feed_coin(ctx, char, ID, amount):
     # char_info[ctx.message.author.id][ID] = char
     xp_toLvl = xp(char[3])
     bar = int((current_xp / xp_toLvl) * 10)
+    if bar >100:
+        bar = 100
     xp_bar = "		[" + ("█" * bar) + ("-" * (10 - bar)) + "] " + str(current_xp) + "/" + str(
         xp_toLvl) + " (+{})".format(amount)
 
@@ -734,22 +738,22 @@ async def filter(ctx, *, options):
     """Shows you a list of cards you own filtered by the options chosen
 
 
-	   ALLOWED OPTERATORS: (ONLY ONE)
-		>
-		<
-		=
-		&
+        ALLOWED OPTERATORS: (ONLY ONE)
+        >
+        <
+        =
+        &
 
-	   ALLOWED FILTERS:
-		LEVEL
-		NAME (Character)
-		NICKNAME (NICK)
-		RARITY
-		HP
-		ATK
-		SPD
-		FAVOURITE
-	"""
+        ALLOWED FILTERS:
+        LEVEL
+        NAME (Character)
+        NICKNAME (NICK)
+        RARITY
+        HP
+        ATK
+        SPD
+        FAVOURITE
+    """
     filtered_cards = get_charinfo()[ctx.author.id]
 
     temp = []
@@ -895,8 +899,8 @@ async def filter_raise_error(ctx, error_op, error_msg):
 
 def filter_verify1(operation):
     """Expects a touple with a filter and a value. Confirms the given input is valid
-	If input is valid returns a single integer with the index value that needs to be checked
-	returns a string with the error if it is not valid"""
+    If input is valid returns a single integer with the index value that needs to be checked
+    returns a string with the error if it is not valid"""
 
     filter_id = operation[0]
     value = operation[1]
@@ -990,8 +994,8 @@ async def quit(ctx):
         for user in char_info:
             for card in char_info[user]:
                 c.execute("INSERT INTO char_info_encr Values(?,?,?,?,?,?,?,?,?,?,?,?)", (
-                    user, card[0], card[1], card[2], card[3], card[4], card[5], card[6], card[7], int(card[8]), card[9],
-                    card[10]))
+                    user, card[0], card[1], card[2], card[3], str(card[4]), str(card[5]), str(card[6]), str(card[7]),
+                    int(card[8]), str(card[9]), str(card[10])))
         conn.commit()
         save_obj(player_coins, "Coin_info")
         save_obj(trade_count, "Trade_count")
@@ -1062,7 +1066,8 @@ async def create(ctx, user, folder, rarity, lvl, hp, atk, spd, *, img):
         max = len(char_info[int(user)]) + 1
         char_info[int(user)].append(
             [folder, img, characters[folder][0], int(lvl), int(rarity), int(hp), int(atk), int(spd), False, 0, max])
-        c.execute("INSERT INTO char_info Values(?,?,?,?,?,?,?,?,?,?,?,?)", (user, folder, img, characters[folder][0], int(lvl), int(rarity), int(hp), int(atk), int(spd), False, 0, max))
+        c.execute("INSERT INTO char_info Values(?,?,?,?,?,?,?,?,?,?,?,?)", (
+        user, folder, img, characters[folder][0], int(lvl), int(rarity), int(hp), int(atk), int(spd), False, 0, max))
         await ctx.send("Character created")
     else:
         await ctx.send("No")
@@ -1085,7 +1090,8 @@ def create_card(user, character, image, lvl,
     try:
         char_info[int(user)].append(card)
         c.execute("INSERT INTO char_info Values(?,?,?,?,?,?,?,?,?,?,?,?)", (
-        user, card[0], card[1], card[2], card[3], card[4], card[5], card[6], card[7], int(card[8]), card[9], card[10]))
+            user, card[0], card[1], card[2], card[3], card[4], card[5], card[6], card[7], int(card[8]), card[9],
+            card[10]))
     except:
         char_info[int(user)] = [card]
     return len(char_info[int(user)])
@@ -1227,8 +1233,7 @@ async def trade(ctx, user: discord.Member):
                                                                                                                sender.id)
     )
 
-    msg = await ctx.send(embed=trade_embed)
-    await msg.add_reaction(u'\u2705')
+    await ctx.send(embed=trade_embed, components=[[Button(emoji="✅", id="tradestart")]])
 
 
 @trade.error
@@ -1318,221 +1323,15 @@ async def offer(ctx, id=0):
         await ctx.send(embed=new_embed)
         return
 
-    trade_info[2] = await ctx.send(file=new_img, embed=new_embed)
-    await trade_info[2].add_reaction(u'\u2705')  # check mark
-    await trade_info[2].add_reaction(u"\u274C")  # X mark
+    trade_info[2] = await ctx.send(file=new_img, embed=new_embed, components=[[
+            Button(emoji="✅", id="tradeconfirm"),
+            Button(emoji="❌", id="tradecancel")]])
 
 
 @offer.error
 async def offer_error(ctx, error):
     await ctx.send("Please specify a valid ID")
     print(error)
-
-
-@client.event
-async def on_raw_reaction_add(payload):
-    global char_info
-    global player_coins
-    global trade_inst
-    global trade_count
-    try:
-        channel = client.get_channel(payload.channel_id)
-        message = await channel.fetch_message(payload.message_id)
-        author = message.author.id
-        user = payload.member
-        reaction = payload.emoji
-        if author == BOT_ID:
-            if not message.embeds:
-                return
-            embed = message.embeds[0]
-            color = embed.color
-            owner = embed.author.name
-        else:
-            return
-        if (color == discord.Colour(65534)) and owner == str(user):  # inventory scrolling
-            footer = embed.footer.text
-            current_page = int(footer.split(" ")[2])
-            total_pages = int(footer.split(" ")[5])
-            if str(reaction) == u"\u25C0":  # Left
-                current_page -= 1
-            elif str(reaction) == u"\u25B6":  # Right
-                current_page += 1
-
-            # loop page around
-            if current_page > total_pages:
-                current_page = 1
-            elif current_page < 1:
-                current_page = total_pages
-
-            current_page -= 1  # fix page to start from 0
-
-            new_embed = discord.Embed(
-                title="Your Touhou Cards:",
-                colour=discord.Color.from_rgb(0, 255, 254),
-                description="Points: {} <:point:865682560490012713>\nVouchers: {} :tickets:".format(
-                    player_coins[user.id][0], player_coins[user.id][1])
-            )
-
-            new_embed.set_author(icon_url=user.avatar_url, name=user)
-
-            user_chars = char_info.get(user.id)
-
-            cards = gen_inv(user_chars, current_page)  # generates text display for all characters in the current page
-
-            if cards == "":
-                await channel.send("You do not have any characters on that page")
-                return None
-
-            new_embed.add_field(
-                name="	ID	|		Nickname		|	Level	|	HP	|	ATK	|	SPD	|	Rarity	|",
-                value=cards)
-            new_embed.set_footer(text="Displaying page " + str(current_page + 1) + " out of " + str(
-                math.ceil(len(user_chars) / 12)) + " page(s)")
-
-            await message.edit(embed=new_embed)
-        elif color == discord.Colour(16711424) and str(reaction) == u'\u2705':  # trade start menu
-            target = embed.description.split(",")[0]
-            target = target.replace("<@", "").replace(">", "")
-            if target == str(user.id):  # person who reacted is the person being requested
-                sender = embed.description.split(" ")[1]
-                sender = sender.replace("<@", "").replace(">", "")
-
-                if await check_trading(channel, int(sender), int(target)):
-                    new_embed = discord.Embed(
-                        title="Trade Window",
-                        colour=discord.Color.from_rgb(253, 255, 0),
-                        description="Type in +offer {ID} to put a card up for trade. Press \u2705 when you have "
-                                    "confirmed that you are ok with the contents being traded. If there is a change in "
-                                    "the offer, you must reconfirm the offer. Press :x: to cancel the trade. Note that "
-                                    "you must either complete the trade or cancel it to start a new trade. Trade "
-                                    "sessions do not expire "
-                    )
-                    new_embed.add_field(name=str(await client.fetch_user(int(sender))), value="Nothing",
-                                        inline=False)  # god this is so stupid. I get the user, convert it to an id
-                    # and get the user info back using this command. Im too lazy to do this properly but this is just
-                    # getting worse and worse
-                    new_embed.add_field(name="--------------------------------------------------------------",
-                                        value="--------------------------------------------------------------",
-                                        inline=False)
-                    new_embed.add_field(name=str(await client.fetch_user(int(target))), value="Nothing", inline=False)
-
-                    with open(bg_dir + "//" + "shit_trade_2x.png", "rb") as imagefile:
-                        img = discord.File(imagefile, "image.png")
-                    new_embed.set_image(url="attachment://" + "image.png")
-                    await message.delete()
-                    msg = await channel.send(file=img, embed=new_embed)
-
-                    trade_inst.append([[int(sender), [None, None], False], [int(target), [None, None], False],
-                                       msg])  # starts trade session
-                    # 0: user ID, 1: [Char ID,char data], 2: confirmation
-
-                    await msg.add_reaction(u'\u2705')  # check mark
-                    await msg.add_reaction(u"\u274C")  # X mark
-                else:
-                    await message.delete()
-                    return
-        elif color == discord.Colour(16645888):  # trade menu
-            trade_info = []
-            i = 0
-            for trades in trade_inst:
-                for i in range(2):
-                    if int(trades[i][0]) == int(user.id):
-                        trade_info = trades
-                        break
-
-            if trade_info != [] and str(reaction) == u'\u2705':  # check mark (confirm trade)
-                if trade_info[i][1][1] is None:
-                    await channel.send("You must send a card before you can confirm the trade")
-                    return
-                trade_info[i][2] = True
-                new_embed = embed
-                old_fields = embed.fields
-                embed.clear_fields()
-                if '\u2705' in old_fields[i * 2].name:
-                    old_fields[i * 2].name = old_fields[i * 2].name
-                else:
-                    old_fields[i * 2].name = u'\u2705' + old_fields[i * 2].name
-                for i in old_fields:
-                    new_embed.add_field(name=i.name, value=i.value, inline=i.inline)
-
-                new_embed.set_image(url="attachment://" + "image.png")
-
-                if trade_info[0][2] and trade_info[1][2]:
-                    fail1 = False
-                    fail2 = False
-                    new_embed.color = discord.Color.from_rgb(0, 255, 0)
-                    # I swear this is going to cause problems in the future but meh. let my future self suffer for this autism
-                    new_embed.description = "Trade has been completed"
-                    trade_inst.remove(trade_info)  # deletes trade instance
-                    # check to see if the characters being trades are still present in inventories (done separately so
-                    # no characters are lost)
-                    try:  # Player 1
-                        char_info[int(trade_info[0][0])].remove(trade_info[0][1][1])
-                    except Exception as e:
-                        fail1 = True
-
-                    if not fail1:
-                        try:  # Player 2
-                            char_info[int(trade_info[1][0])].remove(trade_info[1][1][1])
-                        except Exception as e:
-                            fail2 = True
-                    else:
-                        new_embed.title = "Trade Canceled"
-                        new_embed.description = "Failed to find card belonging to {}. Trade has been canceled".format(
-                            str(await client.fetch_user(int(trade_info[0][0]))))
-                        new_embed.color = discord.Color.from_rgb(255, 0, 0)
-                    if fail2:  # give back card
-                        char_info[int(trade_info[0][0])].append(trade_info[0][1][1])
-
-                        new_embed.title = "Trade Canceled"
-                        new_embed.description = "Failed to find card belonging to {}. Trade has been canceled".format(
-                            str(await client.fetch_user(int(trade_info[1][0]))))
-                        new_embed.color = discord.Color.from_rgb(255, 0, 0)
-                    else:  # give each other the cards
-
-                        # create new unique identifiers for the cards
-                        max1 = 0
-                        for char in char_info[int(trade_info[0][0])]:
-                            if char[10] > max1:
-                                max1 = char[10]
-
-                        max2 = 0
-                        for char in char_info[int(trade_info[1][0])]:
-                            if char[10] > max2:
-                                max2 = char[10]
-
-                        trade_info[1][1][1][10] = max1 + 1  # player 1 gets this card
-                        trade_info[0][1][1][10] = max2 + 1  # player 2 gets this card
-
-                        try:
-                            trade_count[int(trade_info[0][0])] += 1
-                        except:
-                            trade_count[int(trade_info[0][0])] = 1
-
-                        try:
-                            trade_count[int(trade_info[1][0])] += 1
-                        except:
-                            trade_count[int(trade_info[1][0])] = 1
-
-                        char_info[int(trade_info[0][0])].append(trade_info[1][1][1])
-                        char_info[int(trade_info[1][0])].append(trade_info[0][1][1])
-
-                await message.edit(embed=new_embed)
-
-            elif trade_info != [] and str(reaction) == u"\u274C":  # X mark
-                if message.id == trade_info[2].id:  # compares message ids
-                    trade_inst.remove(trade_info)  # deletes trade instance
-
-                    new_embed = discord.Embed(
-                        title="Trade Canceled",
-                        colour=discord.Color.from_rgb(255, 0, 0),
-                        description="The trade has been canceled by {}.".format(str(user))
-                    )
-                    new_embed.set_image(url="attachment://" + "image.png")
-
-                    await message.edit(embed=new_embed)
-    except Exception as e:
-        print(e)
 
 
 def gen_inv(user_chars, page):
@@ -1574,15 +1373,15 @@ async def _suggest(ctx, suggestion):
 
 @client.command(aliases=['inv', 'characters', 'cards', 'char', 'card'])
 async def inventory(ctx, page=1):
-    """Shows info about all character cards you own. Type in a number after it to display other pages (+inv {page})"""
-    global char_info
-    global player_coins
-
     try:
         page = int(page)
     except:
         await ctx.send(str(page) + " is not a page number")
         return
+    """Shows info about all character cards you own. Type in a number after it to display other pages (+inv {page})"""
+    global char_info
+    global player_coins
+
     page -= 1
     user_chars = char_info.get(ctx.message.author.id)
     if user_chars is None:
@@ -1612,9 +1411,9 @@ async def inventory(ctx, page=1):
     inv_embed.set_footer(
         text="Displaying page " + str(page + 1) + " out of " + str(math.ceil(len(user_chars) / 12)) + " page(s)")
 
-    msg = await ctx.send(embed=inv_embed)
-    await msg.add_reaction(u"\u25C0")
-    await msg.add_reaction(u"\u25B6")
+    await ctx.send(embed=inv_embed, components=[[
+        Button(emoji="◀", id="invleft"),
+        Button(emoji="▶", id="invright")]])
 
 
 @client.command(aliases=['favorite', 'fav'])
@@ -1645,10 +1444,10 @@ async def favourite(ctx, id=0):
 @client.command(aliases=['updates'])
 async def changelog(ctx, page=1):
     try:
-        page=int(page)
+        page = int(page)
     except:
         return
-    if page<1:
+    if page < 1:
         return
     with open("changelog.txt", "r") as f:
         lines = []
@@ -1658,18 +1457,35 @@ async def changelog(ctx, page=1):
     lines.reverse()
     embed = discord.Embed(title="Changelog", colour=0x000000)
     tosend = ""
-    counter=0
+    counter = 0
     for line in lines:
-        if len(tosend+line[0] + "\n" + line[1] + "\n") <1024:
+        if len(tosend + line[0] + "\n" + line[1] + "\n") < 1024:
             tosend += line[0] + "\n" + line[1] + "\n"
         else:
-            counter+=1
-            if counter<page:
+            counter += 1
+            if counter < page:
                 tosend = ""
                 tosend += line[0] + "\n" + line[1] + "\n"
     embed.add_field(name="Changes", value=tosend)
-    embed.set_footer(text="Page "+ str(page))
+    embed.set_footer(text="Page " + str(page))
     await ctx.send(embed=embed)
+
+
+@client.command(aliases=['management', 'serversettings'])
+@commands.has_permissions(manage_guild=True)
+async def settings(ctx):
+    row = c.execute("SELECT * FROM guild_settings WHERE guildID=?", (ctx.guild.id,)).fetchone()
+    if row is None:
+        lenen = "no"
+    else:
+        if row[2] == 1:
+            lenen = "yes"
+        else:
+            lenen = "no"
+    embed = discord.Embed(title='Server Settings', description='Press a button to toggle or edit the setting',
+                          colour=0xFFFFFE)
+    embed.add_field(name="1️⃣ Len'en Characters", value=lenen)
+    await ctx.send(embed=embed, components=[[Button(emoji='1️⃣', id='settings1')]])
 
 
 def xp(level):
@@ -1738,7 +1554,7 @@ async def sell(ctx, target, *, stars=0):
 
         if char[8]:
             await ctx.send(
-                "You cannot sell characters you have favorited. Please unfavorite by typing +favorite {ID} and try "
+                "You cannot sell characters you have favourited. Please unfavourite by typing +favourite {ID} and try "
                 "selling the character again")
             return None
         else:
@@ -1817,7 +1633,10 @@ async def info(ctx, id=1):
 
     rare_img = ["https://i.imgur.com/i9MbAc4.png", "https://i.imgur.com/VCGR1iu.png", "https://i.imgur.com/fD1E57X.png",
                 "https://i.imgur.com/hohZnFi.png", "https://i.imgur.com/Sx3vB8n.png", "https://i.imgur.com/4Xe5Jg3.gif"]
-
+    try:
+        id = int(id)
+    except:
+        return
     id -= 1
 
     if id < 0:
@@ -1839,6 +1658,8 @@ async def info(ctx, id=1):
     xp_toLvl = xp(user_chars[id][3])
     progress = (current_xp / xp_toLvl) * 100
     bar = int(progress // 10)
+    if bar >100:
+        bar = 100
     xp_bar = " [" + ("█" * bar) + ("-" * (10 - bar)) + "] " + str(current_xp) + "/" + str(
         xp_toLvl) + " ({:.1f}%)".format(progress)
     char_embed.add_field(name="Rarity:	",
@@ -1888,6 +1709,232 @@ async def info(ctx, id=1):
 async def info_error(ctx, error):
     await ctx.send("You do not have a character with the given ID")
 
+
+@client.event
+async def on_button_click(interaction):
+    if interaction.component.id == 'settings1':
+        message = interaction.message
+        if message.author.id == BOT_ID:
+            if interaction.user.permissions_in(interaction.channel).manage_guild:
+                embed = message.embeds[0]
+                lenen = embed.fields[0].value
+                if lenen == "yes":
+                    lenen = "no"
+                    insertlen = 0
+                else:
+                    lenen = "yes"
+                    insertlen = 1
+                embed.set_field_at(0, name=embed.fields[0].name, value=lenen)
+                c.execute('DELETE FROM guild_settings WHERE guildID=?', (interaction.guild.id,))
+                c.execute('INSERT INTO guild_settings Values(?,?,?)', (interaction.guild.id, 1, insertlen))
+                conn.commit()
+                await message.edit(embed=embed)
+                await interaction.respond(content="Settings updated")
+    if interaction.responded:
+        return
+    global char_info
+    global player_coins
+    global trade_inst
+    global trade_count
+    try:
+        channel = interaction.channel
+        message = interaction.message
+        author = message.author.id
+        if author == BOT_ID:
+            if not message.embeds:
+                return
+            embed = message.embeds[0]
+            color = embed.color
+            owner = embed.author.name
+            await interaction.respond(type=6)
+        else:
+            return
+        user = interaction.user
+        interid = interaction.component.id
+        if (color == discord.Colour(65534)) and owner == str(user):  # inventory scrolling
+            footer = embed.footer.text
+            current_page = int(footer.split(" ")[2])
+            total_pages = int(footer.split(" ")[5])
+            if interid == 'invleft':  # Left
+                current_page -= 1
+            elif interid == 'invright':  # Right
+                current_page += 1
+
+            # loop page around
+            if current_page > total_pages:
+                current_page = 1
+            elif current_page < 1:
+                current_page = total_pages
+
+            current_page -= 1  # fix page to start from 0
+
+            new_embed = discord.Embed(
+                title="Your Touhou Cards:",
+                colour=discord.Color.from_rgb(0, 255, 254),
+                description="Points: {} <:point:865682560490012713>\nVouchers: {} :tickets:".format(
+                    player_coins[user.id][0], player_coins[user.id][1])
+            )
+
+            new_embed.set_author(icon_url=user.avatar_url, name=str(user))
+
+            user_chars = char_info.get(user.id)
+
+            cards = gen_inv(user_chars, current_page)  # generates text display for all characters in the current page
+
+            if cards == "":
+                await channel.send("You do not have any characters on that page")
+                return None
+
+            new_embed.add_field(
+                name="	ID	|		Nickname		|	Level	|	HP	|	ATK	|	SPD	|	Rarity	|",
+                value=cards)
+            new_embed.set_footer(text="Displaying page " + str(current_page + 1) + " out of " + str(
+                math.ceil(len(user_chars) / 12)) + " page(s)")
+
+            await message.edit(embed=new_embed)
+        elif color == discord.Colour(16711424) and interid == 'tradestart':  # trade start menu
+            target = embed.description.split(",")[0]
+            target = target.replace("<@", "").replace(">", "")
+            if target == str(user.id):  # person who reacted is the person being requested
+                sender = embed.description.split(" ")[1]
+                sender = sender.replace("<@", "").replace(">", "")
+
+                if await check_trading(channel, int(sender), int(target)):
+                    new_embed = discord.Embed(
+                        title="Trade Window",
+                        colour=discord.Color.from_rgb(253, 255, 0),
+                        description="Type in +offer {ID} to put a card up for trade. Press \u2705 when you have "
+                                    "confirmed that you are ok with the contents being traded. If there is a change in "
+                                    "the offer, you must reconfirm the offer. Press :x: to cancel the trade. Note that "
+                                    "you must either complete the trade or cancel it to start a new trade. Trade "
+                                    "sessions do not expire "
+                    )
+                    new_embed.add_field(name=str(await client.fetch_user(int(sender))), value="Nothing",
+                                        inline=False)  # god this is so stupid. I get the user, convert it to an id
+                    # and get the user info back using this command. Im too lazy to do this properly but this is just
+                    # getting worse and worse
+                    new_embed.add_field(name="--------------------------------------------------------------",
+                                        value="--------------------------------------------------------------",
+                                        inline=False)
+                    new_embed.add_field(name=str(await client.fetch_user(int(target))), value="Nothing", inline=False)
+
+                    with open(bg_dir + "//" + "shit_trade_2x.png", "rb") as imagefile:
+                        img = discord.File(imagefile, "image.png")
+                    new_embed.set_image(url="attachment://" + "image.png")
+                    await message.delete()
+                    msg = await channel.send(file=img, embed=new_embed)
+
+                    trade_inst.append([[int(sender), [None, None], False], [int(target), [None, None], False],
+                                       msg])  # starts trade session
+                    # 0: user ID, 1: [Char ID,char data], 2: confirmation
+
+                    await msg.add_reaction(u'\u2705')  # check mark
+                    await msg.add_reaction(u"\u274C")  # X mark
+                else:
+                    await message.delete()
+                    return
+        elif color == discord.Colour(16645888):  # trade menu
+            trade_info = []
+            i = 0
+            for trades in trade_inst:
+                for i in range(2):
+                    if int(trades[i][0]) == int(user.id):
+                        trade_info = trades
+                        break
+
+            if trade_info != [] and interid == 'tradeconfirm':  # check mark (confirm trade)
+                if trade_info[i][1][1] is None:
+                    await channel.send("You must send a card before you can confirm the trade")
+                    return
+                trade_info[i][2] = True
+                new_embed = embed
+                old_fields = embed.fields
+                embed.clear_fields()
+                if '\u2705' in old_fields[i * 2].name:
+                    old_fields[i * 2].name = old_fields[i * 2].name
+                else:
+                    old_fields[i * 2].name = u'\u2705' + old_fields[i * 2].name
+                for i in old_fields:
+                    new_embed.add_field(name=i.name, value=i.value, inline=i.inline)
+
+                new_embed.set_image(url="attachment://" + "image.png")
+
+                if trade_info[0][2] and trade_info[1][2]:
+                    fail1 = False
+                    fail2 = False
+                    new_embed.color = discord.Color.from_rgb(0, 255, 0)
+                    # I swear this is going to cause problems in the future but meh. let my future self suffer for this autism
+                    new_embed.description = "Trade has been completed"
+                    trade_inst.remove(trade_info)  # deletes trade instance
+                    # check to see if the characters being trades are still present in inventories (done separately so
+                    # no characters are lost)
+                    try:  # Player 1
+                        char_info[int(trade_info[0][0])].remove(trade_info[0][1][1])
+                    except Exception as e:
+                        fail1 = True
+
+                    if not fail1:
+                        try:  # Player 2
+                            char_info[int(trade_info[1][0])].remove(trade_info[1][1][1])
+                        except Exception as e:
+                            fail2 = True
+                    else:
+                        new_embed.title = "Trade Canceled"
+                        new_embed.description = "Failed to find card belonging to {}. Trade has been canceled".format(
+                            str(await client.fetch_user(int(trade_info[0][0]))))
+                        new_embed.color = discord.Color.from_rgb(255, 0, 0)
+                    if fail2:  # give back card
+                        char_info[int(trade_info[0][0])].append(trade_info[0][1][1])
+
+                        new_embed.title = "Trade Canceled"
+                        new_embed.description = "Failed to find card belonging to {}. Trade has been canceled".format(
+                            str(await client.fetch_user(int(trade_info[1][0]))))
+                        new_embed.color = discord.Color.from_rgb(255, 0, 0)
+                    else:  # give each other the cards
+
+                        # create new unique identifiers for the cards
+                        max1 = 0
+                        for char in char_info[int(trade_info[0][0])]:
+                            if char[10] > max1:
+                                max1 = char[10]
+
+                        max2 = 0
+                        for char in char_info[int(trade_info[1][0])]:
+                            if char[10] > max2:
+                                max2 = char[10]
+
+                        trade_info[1][1][1][10] = max1 + 1  # player 1 gets this card
+                        trade_info[0][1][1][10] = max2 + 1  # player 2 gets this card
+
+                        try:
+                            trade_count[int(trade_info[0][0])] += 1
+                        except:
+                            trade_count[int(trade_info[0][0])] = 1
+
+                        try:
+                            trade_count[int(trade_info[1][0])] += 1
+                        except:
+                            trade_count[int(trade_info[1][0])] = 1
+
+                        char_info[int(trade_info[0][0])].append(trade_info[1][1][1])
+                        char_info[int(trade_info[1][0])].append(trade_info[0][1][1])
+
+                await message.edit(embed=new_embed)
+
+            elif trade_info != [] and interid == 'tradecancel':  # X mark
+                if message.id == trade_info[2].id:  # compares message ids
+                    trade_inst.remove(trade_info)  # deletes trade instance
+
+                    new_embed = discord.Embed(
+                        title="Trade Canceled",
+                        colour=discord.Color.from_rgb(255, 0, 0),
+                        description="The trade has been canceled by {}.".format(str(user))
+                    )
+                    new_embed.set_image(url="attachment://" + "image.png")
+
+                    await message.edit(embed=new_embed)
+    except Exception as e:
+        print(e)
 
 @client.command()
 async def requestdatadeletion(ctx):

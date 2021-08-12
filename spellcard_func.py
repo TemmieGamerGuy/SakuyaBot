@@ -474,7 +474,8 @@ class Spells():
 		message.extend(self.target_buff(target_card,"atk_down",reduction,duration))
 		
 		self.battle_log.extend(message)
-	
+
+
 	def rikako_spell(self,move):
 		enemy = 1 - move[4]
 		power = move[0][6][6]

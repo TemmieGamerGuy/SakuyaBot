@@ -8,7 +8,7 @@ class leaderboards(commands.Cog):
 		self.client = client
 
 	@commands.command(aliases=["gboard", "globalboard", "leaderboardglobal", "gb", "leaderboard", "lb"])
-	@commands.cooldown(1, 5, commands.BucketType.user)
+	@commands.cooldown(1, 20, commands.BucketType.guild)
 	async def globalleaderboard(self, ctx, pointer=None):
 		"""Displays leaderboard of the +guess command"""
 		player_save = get_playersave()
@@ -37,9 +37,6 @@ class leaderboards(commands.Cog):
 					desc += "**"+(str(i + 1) + ": " + str(user) + " : " + str(player_save[key]) + "\n")+"**"
 				else:
 					desc += (str(i+1)+": "+str(user)+" : "+str(player_save[key])+"\n")
-				if str(user).startswith("Deleted User"):
-					del char_info[user]
-					del player_save[user]
 			if i > (pointer + size):
 				break
 

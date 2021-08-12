@@ -157,7 +157,7 @@ characters = {
 	"EX-2"	: ["Hieda no Akyuu", "Hieda", "Akyuu", "Akyu"],
 	"EX-3"	: ["Rin Satsuki", "Satsuki Rin", "Rin", "Satsuki"],
 	"EX-4"	: ["Tokiko"],
-	"EX-5"	: ["Rei'sen"],
+	"EX-5"	: ["Rei'sen", "Fake Reisen"],
 	"EX-6"	: ["Maribel Hearn", "Maribel", "Hearn"], 	
 	"EX-7"	: ["Usami Renko", "Renko Usami", "Renko", "Usami"],
 	"EX-8"	: ["Rinnosuke Morichika", "Morichika Rinnosuke", "Morichika", "Rinnosuke"],

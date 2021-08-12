@@ -70,9 +70,11 @@ class rewards(commands.Cog):
 		embed.add_field(name=characters[char_name][0]+" - "+char_name, value='1/'+str(len(lines)))
 		embed.set_image(url=image)
 		await ctx.send(embed=embed, components=[[
+			Button(emoji="⏪", id="doubleleftimageselect"),
 			Button(emoji="⬅️", id="leftimageselect"),
 			Button(emoji="✔️", id="checkimageselect"),
-			Button(emoji="➡️", id="rightimageselect")]])
+			Button(emoji="➡️", id="rightimageselect"),
+			Button(emoji="⏩", id="doublerightimageselect")]])
 	@change_image.error
 	async def change_image_error(self, ctx, error):
 		embed = discord.Embed(
@@ -383,6 +385,7 @@ class rewards(commands.Cog):
 		if user.id != userid:
 			return
 		if interaction.component.id == 'leftimageselect':
+			await interaction.respond(type=6)
 			char_name = embed.fields[0].name.split(" - ")[1]
 			directory = char_dir + "//" + char_name
 			with open(directory + '//imagelist.txt', "r") as f:
@@ -396,6 +399,7 @@ class rewards(commands.Cog):
 			embed.set_field_at(0, name=embed.fields[0].name, value=str(imgnum)+'/'+str(len(lines)))
 			embed.set_image(url=image)
 		elif interaction.component.id == 'rightimageselect':
+			await interaction.respond(type=6)
 			char_name = embed.fields[0].name.split(" - ")[1]
 			directory = char_dir + "//" + char_name
 			with open(directory + '//imagelist.txt', "r") as f:
@@ -408,8 +412,36 @@ class rewards(commands.Cog):
 			image = lines[imgnum-1]
 			embed.set_field_at(0, name=embed.fields[0].name, value=str(imgnum)+'/'+str(len(lines)))
 			embed.set_image(url=image)
+		elif interaction.component.id == 'doubleleftimageselect':
+			await interaction.respond(type=6)
+			char_name = embed.fields[0].name.split(" - ")[1]
+			directory = char_dir + "//" + char_name
+			with open(directory + '//imagelist.txt', "r") as f:
+				lines = [line.rstrip() for line in f]
+			imgnum = int(embed.fields[0].value.split('/')[0])
+			imgnum -= 10
+			if imgnum <= 0:
+				imgnum = len(lines)+imgnum
+
+			image = lines[imgnum-1]
+			embed.set_field_at(0, name=embed.fields[0].name, value=str(imgnum)+'/'+str(len(lines)))
+			embed.set_image(url=image)
+		elif interaction.component.id == 'doublerightimageselect':
+			await interaction.respond(type=6)
+			char_name = embed.fields[0].name.split(" - ")[1]
+			directory = char_dir + "//" + char_name
+			with open(directory + '//imagelist.txt', "r") as f:
+				lines = [line.rstrip() for line in f]
+			imgnum = int(embed.fields[0].value.split('/')[0])
+			imgnum += 10
+			if imgnum > len(lines):
+				imgnum -= len(lines)
+			image = lines[imgnum-1]
+			embed.set_field_at(0, name=embed.fields[0].name, value=str(imgnum)+'/'+str(len(lines)))
+			embed.set_image(url=image)
 		elif interaction.component.id == 'checkimageselect':
 			if get_playerpasses(userid) >= 1:
+				await interaction.respond(type=6)
 				add_playerpasses(userid, -1)
 				char_name = embed.fields[0].name.split(" - ")[1]
 				directory = char_dir + "//" + char_name
@@ -426,7 +458,6 @@ class rewards(commands.Cog):
 				await interaction.respond(content="You do not have an image change pass to do that")
 				return
 		await message.edit(embed=embed)
-		await interaction.respond(type=6)
 
 def setup(client):
 	client.add_cog(rewards(client))

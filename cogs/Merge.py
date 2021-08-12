@@ -25,59 +25,41 @@ async def automerge(ctx, user):
 				if card[4] <= 5:
 					Card1 = card
 					Card2 = sortedcards[i + 1]
-					try:
-						# Create new Character
-
-						# Calulate total xp of both characters
-						xp = sum([n ** 3 for n in range(Card1[3] + 1)]) + sum(
-							[n ** 3 for n in range(Card2[3] + 1)]) + Card1[9] + Card2[9]
-
-						if Card1[1] in unique:  # unique characters
-							base = unique[Card1[1]]
-						else:  # generic characters
-							base = base_stats.get(Card1[0])
-						if base == None:
-							base = [10, 10, 10]
-
-						xp_toLvl = lambda n: n ** 3
-						level = 1
-						HP, ATK, SPD = base
-
-						while xp > xp_toLvl(level):
-							xp -= xp_toLvl(level)
-							level += 1
-							HP += base[0] + random.randint(-2, 2) + (Card1[4])
-							ATK += base[1] + random.randint(-2, 2) + (Card1[4])
-							SPD += base[2] + random.randint(-2, 2) + (Card1[4])
-
-						# New card should not have a stat lower than the original (Can happen cause rng stats lol)
-						if HP < Card1[5]: HP = Card1[5]
-						if ATK < Card1[6]: ATK = Card1[6]
-						if SPD < Card1[7]: SPD = Card1[7]
-
-						newCard = [Card1[0], Card1[1], Card1[2], level, Card1[4] + 1, HP, ATK, SPD, Card1[8], xp,
-								   Card1[10]]
-
-						# Remove Characters from List
-						userchar_info.remove(Card1)
-						userchar_info.remove(Card2)
-						# Add new Card to List
-						userchar_info.append(newCard)
-
-						# Update Cards owned
-						put_charinfo(user, userchar_info)
-						mergedcards += 1
-						await automerge(ctx, user)
-						return
-
-					except Exception as e:
-						embed = discord.Embed(
-							title="Command Error",
-							colour=discord.Color.from_rgb(255, 0, 0),
-							description="The following error has occured when running the merge command\n{}\nPlease message TemmieGamerGuy#3754 if this proves to be an issue".format(
-								e)
-						)
-						await ctx.send(embed=embed)
+					# Create new Character
+					# Calulate total xp of both characters
+					xp = sum([n ** 3 for n in range(Card1[3] + 1)]) + sum(
+						[n ** 3 for n in range(Card2[3] + 1)]) + Card1[9] + Card2[9]
+					if Card1[1] in unique:  # unique characters
+						base = unique[Card1[1]]
+					else:  # generic characters
+						base = base_stats.get(Card1[0])
+					if base == None:
+						base = [10, 10, 10]
+					xp_toLvl = lambda n: n ** 3
+					level = 1
+					HP, ATK, SPD = base
+					while xp > xp_toLvl(level):
+						xp -= xp_toLvl(level)
+						level += 1
+						HP += base[0] + random.randint(-2, 2) + (Card1[4])
+						ATK += base[1] + random.randint(-2, 2) + (Card1[4])
+						SPD += base[2] + random.randint(-2, 2) + (Card1[4])
+					# New card should not have a stat lower than the original (Can happen cause rng stats lol)
+					if HP < Card1[5]: HP = Card1[5]
+					if ATK < Card1[6]: ATK = Card1[6]
+					if SPD < Card1[7]: SPD = Card1[7]
+					newCard = [Card1[0], Card1[1], Card1[2], level, Card1[4] + 1, HP, ATK, SPD, Card1[8], xp,
+							   Card1[10]]
+					# Remove Characters from List
+					userchar_info.remove(Card1)
+					userchar_info.remove(Card2)
+					# Add new Card to List
+					userchar_info.append(newCard)
+					# Update Cards owned
+					put_charinfo(user, userchar_info)
+					mergedcards += 1
+					await automerge(ctx, user)
+					return
 	await ctx.send(str(mergedcards) + " cards were merged")
 	mergedcards = 0
 
