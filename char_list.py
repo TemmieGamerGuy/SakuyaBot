@@ -179,4 +179,8 @@ characters = {
 	"EX-24"	: ["Beerko"],
 	"EX-25"	: ["Okunoda Miyoi","Miyoi Okunoda","Miyoi","Okunoda"]
 	}
-	
+lencharacters = {
+    "L1-01": ["Yabusame Houlen", "Yabusame", "Houlen"],
+    "L1-02": ["Tsubakura Enraku", "Tsubakura", "Enraku"]
+}
+fullcharacters = characters | lencharacters

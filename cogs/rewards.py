@@ -1,11 +1,13 @@
 import discord, math, random, os
+import discord_slash
 from discord.ext import commands, tasks
 from discord.ext.commands.cooldowns import BucketType
 from bot import get_charinfo, put_charinfo, get_playercoins, add_playercoins, add_playervouchers, add_playerpasses, \
-	get_playervouchers, get_playerpasses, info_internal, create_card
+	get_playervouchers, get_playerpasses, info_internal, create_card, c, create_button, create_actionrow, ButtonStyle, \
+	ComponentContext
 from settings import *
 from char_list import *
-from discord_components import Button
+
 
 
 char_dir = ".//touhoushit"
@@ -30,7 +32,7 @@ class rewards(commands.Cog):
 		x = get_playervouchers(ctx.author.id)
 		print(x)
 
-	@commands.command()
+	@commands.command(aliases=["changeimage", "imagechange"])
 	@commands.cooldown(10, 600, commands.BucketType.user)
 	async def change_image(self, ctx, ID: int):
 		char_info = get_charinfo()[ctx.author.id]
@@ -67,14 +69,14 @@ class rewards(commands.Cog):
 			colour=discord.Color.from_rgb(0, 255, 0),
 			description='<@!'+str(ctx.author.id)+">'s Image Change for ID: "+str(ID+1)
 		)
-		embed.add_field(name=characters[char_name][0]+" - "+char_name, value='1/'+str(len(lines)))
+		embed.add_field(name=fullcharacters[char_name][0]+" - "+char_name, value='1/'+str(len(lines)))
 		embed.set_image(url=image)
-		await ctx.send(embed=embed, components=[[
-			Button(emoji="⏪", id="doubleleftimageselect"),
-			Button(emoji="⬅️", id="leftimageselect"),
-			Button(emoji="✔️", id="checkimageselect"),
-			Button(emoji="➡️", id="rightimageselect"),
-			Button(emoji="⏩", id="doublerightimageselect")]])
+		await ctx.send(embed=embed, components=[create_actionrow(
+			create_button(style=ButtonStyle.grey, emoji="⏪", custom_id="doubleleftimageselect"),
+			create_button(style=ButtonStyle.grey, emoji="⬅️", custom_id="leftimageselect"),
+			create_button(style=ButtonStyle.grey, emoji="✔️", custom_id="checkimageselect"),
+			create_button(style=ButtonStyle.grey, emoji="➡️", custom_id="rightimageselect"),
+			create_button(style=ButtonStyle.grey, emoji="⏩", custom_id="doublerightimageselect"))])
 	@change_image.error
 	async def change_image_error(self, ctx, error):
 		embed = discord.Embed(
@@ -191,8 +193,16 @@ class rewards(commands.Cog):
 		name_lower = name.lower()
 		char_id = None
 		if vouchers >= 1:
-			for key in characters:
-				if name_lower in [x.lower() for x in characters[key]]:
+			row = c.execute("SELECT * FROM guild_settings WHERE guildID=?", (ctx.guild.id,)).fetchone()
+			if row is not None:
+				if row[2] == 1:
+					chardict = fullcharacters
+				else:
+					chardict = characters
+			else:
+				chardict = characters
+			for key in chardict:
+				if name_lower in [x.lower() for x in chardict[key]]:
 					char_id = key
 					break
 			else:
@@ -228,7 +238,15 @@ class rewards(commands.Cog):
 			color = embed.color
 			if color == discord.Colour(8388736) and str(reaction) == "1\u20E3":
 				if vouchers >= 1:
-					char = random.choice(list(characters))
+					row = c.execute("SELECT * FROM guild_settings WHERE guildID=?", (reaction.message.guild.id,)).fetchone()
+					if row is not None:
+						if row[2] == 1:
+							chardict = fullcharacters
+						else:
+							chardict = characters
+					else:
+						chardict = characters
+					char = random.choice(list(chardict))
 					add_playervouchers(user.id, -1)
 					directory = char_dir + "//" + char
 					with open(directory + '//imagelist.txt', "r") as f:
@@ -371,11 +389,9 @@ class rewards(commands.Cog):
 					return
 
 	@commands.Cog.listener()
-	async def on_button_click(self, interaction):
-		if interaction.responded:
-			return
-		user = interaction.user
-		message = interaction.message
+	async def on_component(self, interaction: ComponentContext):
+		user = interaction.author
+		message = interaction.origin_message
 		embed = message.embeds[0]
 		if message.author.id != BOT_ID:
 			return
@@ -384,8 +400,8 @@ class rewards(commands.Cog):
 		userid = int(embed.description.split('>', 1)[0].replace('<@',"").replace('!',''))
 		if user.id != userid:
 			return
-		if interaction.component.id == 'leftimageselect':
-			await interaction.respond(type=6)
+		if interaction.component_id == 'leftimageselect':
+			await interaction.edit_origin()
 			char_name = embed.fields[0].name.split(" - ")[1]
 			directory = char_dir + "//" + char_name
 			with open(directory + '//imagelist.txt', "r") as f:
@@ -398,8 +414,8 @@ class rewards(commands.Cog):
 			image = lines[imgnum-1]
 			embed.set_field_at(0, name=embed.fields[0].name, value=str(imgnum)+'/'+str(len(lines)))
 			embed.set_image(url=image)
-		elif interaction.component.id == 'rightimageselect':
-			await interaction.respond(type=6)
+		elif interaction.component_id == 'rightimageselect':
+			await interaction.edit_origin()
 			char_name = embed.fields[0].name.split(" - ")[1]
 			directory = char_dir + "//" + char_name
 			with open(directory + '//imagelist.txt', "r") as f:
@@ -412,8 +428,8 @@ class rewards(commands.Cog):
 			image = lines[imgnum-1]
 			embed.set_field_at(0, name=embed.fields[0].name, value=str(imgnum)+'/'+str(len(lines)))
 			embed.set_image(url=image)
-		elif interaction.component.id == 'doubleleftimageselect':
-			await interaction.respond(type=6)
+		elif interaction.component_id == 'doubleleftimageselect':
+			await interaction.edit_origin()
 			char_name = embed.fields[0].name.split(" - ")[1]
 			directory = char_dir + "//" + char_name
 			with open(directory + '//imagelist.txt', "r") as f:
@@ -426,8 +442,8 @@ class rewards(commands.Cog):
 			image = lines[imgnum-1]
 			embed.set_field_at(0, name=embed.fields[0].name, value=str(imgnum)+'/'+str(len(lines)))
 			embed.set_image(url=image)
-		elif interaction.component.id == 'doublerightimageselect':
-			await interaction.respond(type=6)
+		elif interaction.component_id == 'doublerightimageselect':
+			await interaction.edit_origin()
 			char_name = embed.fields[0].name.split(" - ")[1]
 			directory = char_dir + "//" + char_name
 			with open(directory + '//imagelist.txt', "r") as f:
@@ -439,9 +455,9 @@ class rewards(commands.Cog):
 			image = lines[imgnum-1]
 			embed.set_field_at(0, name=embed.fields[0].name, value=str(imgnum)+'/'+str(len(lines)))
 			embed.set_image(url=image)
-		elif interaction.component.id == 'checkimageselect':
+		elif interaction.component_id == 'checkimageselect':
 			if get_playerpasses(userid) >= 1:
-				await interaction.respond(type=6)
+				await interaction.edit_origin()
 				add_playerpasses(userid, -1)
 				char_name = embed.fields[0].name.split(" - ")[1]
 				directory = char_dir + "//" + char_name
@@ -455,9 +471,11 @@ class rewards(commands.Cog):
 				embed.set_image(url=lines[imgnum-1])
 				await message.edit(components=[])
 			else:
-				await interaction.respond(content="You do not have an image change pass to do that")
+				await interaction.send(content="You do not have an image change pass to do that", hidden=True)
 				return
 		await message.edit(embed=embed)
 
+
 def setup(client):
 	client.add_cog(rewards(client))
+

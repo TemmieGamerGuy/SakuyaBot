@@ -14,7 +14,6 @@ char_dir = ".//touhoushit"
 
 async def automerge(ctx, user):
 	global mergedcards
-
 	userchar_info = get_charinfo()[user]
 	sortedcards = sorted(userchar_info, key=operator.itemgetter(0, 4))
 	for i, card in enumerate(sortedcards):

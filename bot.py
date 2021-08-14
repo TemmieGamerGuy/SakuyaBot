@@ -8,7 +8,6 @@ import os
 import pickle
 import random
 import re
-
 import discord_components
 from PIL import Image, ImageFont, ImageDraw
 from base_stats import *
@@ -22,11 +21,13 @@ from settings import *
 from spellcards import *
 from time import time
 from uniques import *
-from discord_slash import SlashCommand, SlashContext
+from discord_slash import SlashCommand, SlashContext, ComponentContext
 from discord_slash.utils.manage_commands import create_option, create_choice
+from discord_slash.utils.manage_components import create_button, create_actionrow
+from discord_slash.model import ButtonStyle
 import sqlite3
 from urllib.request import Request, urlopen
-from discord_components import DiscordComponents, Button
+from discord_components import Button
 
 intents = discord.Intents.default()
 
@@ -274,12 +275,10 @@ async def log_start():
     file = open("useage_log.txt", "a+")
     file.write(str(time()) + '\n')
 
-
 @client.event
 async def on_connect():
     global guild_ids
     print("Bot is running")
-    DiscordComponents(client)
     await log_start()
     log_useage.start()
     print("Now keeping guess usage logs")
@@ -290,7 +289,7 @@ async def on_connect():
     save.start()
     suggestions.start()
     print("Now Auto Saving")
-
+    spellemoji = client.get_emoji(865682533236080652)
 
 @client.command()
 async def help(ctx, *, command=None):
@@ -669,7 +668,8 @@ async def feed_coin(ctx, char, ID, amount):
 
     level = char[3]
 
-    while current_xp >= xp_toLvl and (level + lvlUp < LEVEL_CAP or ctx.author.id == OWNER_ID):  # Have points to feed and is not above level cap
+    while current_xp >= xp_toLvl and (
+            level + lvlUp < LEVEL_CAP or ctx.author.id == OWNER_ID):  # Have points to feed and is not above level cap
         current_xp -= xp_toLvl
         char[3] += 1
         lvlUp += 1
@@ -690,7 +690,7 @@ async def feed_coin(ctx, char, ID, amount):
     # char_info[ctx.message.author.id][ID] = char
     xp_toLvl = xp(char[3])
     bar = int((current_xp / xp_toLvl) * 10)
-    if bar >100:
+    if bar > 100:
         bar = 100
     xp_bar = "		[" + ("█" * bar) + ("-" * (10 - bar)) + "] " + str(current_xp) + "/" + str(
         xp_toLvl) + " (+{})".format(amount)
@@ -710,8 +710,8 @@ async def feed_coin(ctx, char, ID, amount):
 @client.command()
 async def sort(ctx, option, reverse=True):
     """Sorts your touhou characters. Type in +sort {option} {descending (true/false defaults to true if nothing is
-	typed in)} to sort your characters\nOptions for sorting are {Character} {Image} {Level} {Rarity} {HP} {Attack} {
-	Speed} and {Favourite} """
+    typed in)} to sort your characters\nOptions for sorting are {Character} {Image} {Level} {Rarity} {HP} {Attack} {
+    Speed} and {Favourite} """
     global char_info
     try:
         char_info[ctx.message.author.id].sort(key=lambda x: x[
@@ -801,7 +801,7 @@ async def filter(ctx, *, options):
                     temp = []
                     for card in filtered_cards:
                         char_name = card[0]
-                        aliases = characters.get(char_name)
+                        aliases = fullcharacters.get(char_name)
                         if aliases is not None:
                             # Look no one but admins should have cards outside of those in the list
                             # so im gonna do this poorly. Get scammed future me
@@ -1023,7 +1023,7 @@ async def rename(ctx, id, *, name):
         return None
     try:
         char_info[ctx.message.author.id][int(id) - 1][2] = name
-        await ctx.send("Character has been sucessfully renamed")
+        await ctx.send("Character has been successfully renamed")
     except Exception as e:
         await ctx.send(
             "You do not have a character with the same ID\nYou must use this command as follows +rename <id (number)> "
@@ -1052,7 +1052,7 @@ def generate_char(character, image_name, identifier, level=0, weights=[70, 20, 7
         ATK += base[1] + random.randint(-2, 2) + (rarity - 1)
         SPD += base[2] + random.randint(-2, 2) + (rarity - 1)
 
-    return [character, image_name, characters[character][0], level, rarity, HP, ATK, SPD, False, 0, identifier]
+    return [character, image_name, fullcharacters[character][0], level, rarity, HP, ATK, SPD, False, 0, identifier]
 
 
 # character ID (0), file name (1), nickname (2), level (3), rarity (4), HP (5), ATK (6), SPD (7), Favourite (8),
@@ -1065,9 +1065,10 @@ async def create(ctx, user, folder, rarity, lvl, hp, atk, spd, *, img):
     if ctx.message.author.id == OWNER_ID:
         max = len(char_info[int(user)]) + 1
         char_info[int(user)].append(
-            [folder, img, characters[folder][0], int(lvl), int(rarity), int(hp), int(atk), int(spd), False, 0, max])
+            [folder, img, fullcharacters[folder][0], int(lvl), int(rarity), int(hp), int(atk), int(spd), False, 0, max])
         c.execute("INSERT INTO char_info Values(?,?,?,?,?,?,?,?,?,?,?,?)", (
-        user, folder, img, characters[folder][0], int(lvl), int(rarity), int(hp), int(atk), int(spd), False, 0, max))
+            user, folder, img, fullcharacters[folder][0], int(lvl), int(rarity), int(hp), int(atk), int(spd), False, 0,
+            max))
         await ctx.send("Character created")
     else:
         await ctx.send("No")
@@ -1233,7 +1234,7 @@ async def trade(ctx, user: discord.Member):
                                                                                                                sender.id)
     )
 
-    await ctx.send(embed=trade_embed, components=[[Button(emoji="✅", id="tradestart")]])
+    await ctx.send(embed=trade_embed, components=[create_actionrow(create_button(style=ButtonStyle.grey, emoji="✅", custom_id="tradestart"))])
 
 
 @trade.error
@@ -1323,9 +1324,9 @@ async def offer(ctx, id=0):
         await ctx.send(embed=new_embed)
         return
 
-    trade_info[2] = await ctx.send(file=new_img, embed=new_embed, components=[[
-            Button(emoji="✅", id="tradeconfirm"),
-            Button(emoji="❌", id="tradecancel")]])
+    trade_info[2] = await ctx.send(file=new_img, embed=new_embed, components=[create_actionrow(
+        create_button(style=ButtonStyle.grey, emoji="✅", custom_id="tradeconfirm"),
+        create_button(style=ButtonStyle.grey, emoji="❌", custom_id="tradecancel"))])
 
 
 @offer.error
@@ -1411,9 +1412,9 @@ async def inventory(ctx, page=1):
     inv_embed.set_footer(
         text="Displaying page " + str(page + 1) + " out of " + str(math.ceil(len(user_chars) / 12)) + " page(s)")
 
-    await ctx.send(embed=inv_embed, components=[[
-        Button(emoji="◀", id="invleft"),
-        Button(emoji="▶", id="invright")]])
+    await ctx.send(embed=inv_embed, components=[create_actionrow(
+        create_button(style=ButtonStyle.grey, emoji='◀️', custom_id="invleft"),
+        create_button(style=ButtonStyle.grey, emoji='▶️', custom_id="invright"))])
 
 
 @client.command(aliases=['favorite', 'fav'])
@@ -1485,7 +1486,7 @@ async def settings(ctx):
     embed = discord.Embed(title='Server Settings', description='Press a button to toggle or edit the setting',
                           colour=0xFFFFFE)
     embed.add_field(name="1️⃣ Len'en Characters", value=lenen)
-    await ctx.send(embed=embed, components=[[Button(emoji='1️⃣', id='settings1')]])
+    await ctx.send(embed=embed, components=[create_actionrow(create_button(style=ButtonStyle.grey, emoji='1️⃣', custom_id='settings1'))])
 
 
 def xp(level):
@@ -1658,7 +1659,7 @@ async def info(ctx, id=1):
     xp_toLvl = xp(user_chars[id][3])
     progress = (current_xp / xp_toLvl) * 100
     bar = int(progress // 10)
-    if bar >100:
+    if bar > 100:
         bar = 100
     xp_bar = " [" + ("█" * bar) + ("-" * (10 - bar)) + "] " + str(current_xp) + "/" + str(
         xp_toLvl) + " ({:.1f}%)".format(progress)
@@ -1711,11 +1712,11 @@ async def info_error(ctx, error):
 
 
 @client.event
-async def on_button_click(interaction):
-    if interaction.component.id == 'settings1':
-        message = interaction.message
+async def on_component(interaction: ComponentContext):
+    if interaction.component_id == 'settings1':
+        message = interaction.origin_message
         if message.author.id == BOT_ID:
-            if interaction.user.permissions_in(interaction.channel).manage_guild:
+            if interaction.author.permissions_in(interaction.channel).manage_guild:
                 embed = message.embeds[0]
                 lenen = embed.fields[0].value
                 if lenen == "yes":
@@ -1729,7 +1730,7 @@ async def on_button_click(interaction):
                 c.execute('INSERT INTO guild_settings Values(?,?,?)', (interaction.guild.id, 1, insertlen))
                 conn.commit()
                 await message.edit(embed=embed)
-                await interaction.respond(content="Settings updated")
+                await interaction.send(content="Settings updated", hidden=True)
     if interaction.responded:
         return
     global char_info
@@ -1738,7 +1739,7 @@ async def on_button_click(interaction):
     global trade_count
     try:
         channel = interaction.channel
-        message = interaction.message
+        message = interaction.origin_message
         author = message.author.id
         if author == BOT_ID:
             if not message.embeds:
@@ -1746,12 +1747,12 @@ async def on_button_click(interaction):
             embed = message.embeds[0]
             color = embed.color
             owner = embed.author.name
-            await interaction.respond(type=6)
         else:
             return
-        user = interaction.user
-        interid = interaction.component.id
+        user = interaction.author
+        interid = interaction.component_id
         if (color == discord.Colour(65534)) and owner == str(user):  # inventory scrolling
+            await interaction.edit_origin()
             footer = embed.footer.text
             current_page = int(footer.split(" ")[2])
             total_pages = int(footer.split(" ")[5])
@@ -1793,6 +1794,7 @@ async def on_button_click(interaction):
 
             await message.edit(embed=new_embed)
         elif color == discord.Colour(16711424) and interid == 'tradestart':  # trade start menu
+            await interaction.edit_origin()
             target = embed.description.split(",")[0]
             target = target.replace("<@", "").replace(">", "")
             if target == str(user.id):  # person who reacted is the person being requested
@@ -1844,8 +1846,9 @@ async def on_button_click(interaction):
 
             if trade_info != [] and interid == 'tradeconfirm':  # check mark (confirm trade)
                 if trade_info[i][1][1] is None:
-                    await channel.send("You must send a card before you can confirm the trade")
+                    await interaction.send(content="You must send a card before you can confirm the trade", hidden=True)
                     return
+                await interaction.edit_origin()
                 trade_info[i][2] = True
                 new_embed = embed
                 old_fields = embed.fields
@@ -1936,6 +1939,7 @@ async def on_button_click(interaction):
     except Exception as e:
         print(e)
 
+
 @client.command()
 async def requestdatadeletion(ctx):
     global player_save
@@ -1997,10 +2001,18 @@ async def guess(ctx):
         guess_inst.append(ctx.channel.id)  # adds channel to list of active guess instances
 
     guess_counter += 1  # ran the command
+    row = c.execute("SELECT * FROM guild_settings WHERE guildID=?", (ctx.guild.id,)).fetchone()
+    if row is not None:
+        if row[2] == 1:
+            chardict = fullcharacters
+        else:
+            chardict = characters
+    else:
+        chardict = characters
 
     # gets some info and picks character to use
-    target = random.choice(list(characters))
-    sol = characters[target]
+    target = random.choice(list(chardict))
+    sol = chardict[target]
     directory = char_dir + "//" + target
 
     # print(sol)#for me to cheat.
@@ -2123,7 +2135,11 @@ async def forceguess(ctx, character):
 
     # gets some info and picks character to use
     target = character
-    sol = characters[target]
+    try:
+        sol = fullcharacters[target]
+    except:
+        guess_inst.remove(ctx.channel.id)
+        return
     directory = char_dir + "//" + target
 
     # print(sol)#for me to cheat.
