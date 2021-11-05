@@ -13,3 +13,6 @@ Rarities
 *.png
 suggestions.txt
 vote_info.txt
+/database.db
+/encryption.db
+/imgtolink.py
