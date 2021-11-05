@@ -140,7 +140,7 @@ class rewards(commands.Cog):
 		)
 
 		shop_embed.add_field(name=":one: Random Level 50 Card", value="Cost: 1 :tickets:", inline=False)
-		shop_embed.add_field(name=":two: Common Level 1 Card of Choice", value="Cost: 1 :tickets:", inline=False)
+		shop_embed.add_field(name=":two: Common Level 1 Card of Choice", value="Cost: 2 :tickets:", inline=False)
 		# shop_embed.add_field(name=":two: Common Level 1 Card of Choice",value = "WIP. Option will be available soon:tm:",inline=False)
 		shop_embed.add_field(name=":three: 200000 <:point:865682560490012713>", value="Cost: 1 :tickets:", inline=False)
 		shop_embed.add_field(name=":four: Image Change Pass", value="Cost: 5 :tickets:", inline=False)
@@ -192,7 +192,7 @@ class rewards(commands.Cog):
 
 		name_lower = name.lower()
 		char_id = None
-		if vouchers >= 1:
+		if vouchers >= 2:
 			row = c.execute("SELECT * FROM guild_settings WHERE guildID=?", (ctx.guild.id,)).fetchone()
 			if row is not None:
 				if row[2] == 1:
@@ -212,7 +212,7 @@ class rewards(commands.Cog):
 			embed = discord.Embed(
 				title="Confirm character choice",
 				color=0x800081,  # (128,0,129)
-				description="Select the check mark reaction below to purchase a card with this character for 1:tickets: reward voucher.\n\nImportant Note: The card you get may not be the exact image shown. It will however be the same character"
+				description="Select the check mark reaction below to purchase a card with this character for 2:tickets: reward voucher.\n\nImportant Note: The card you get may not be the exact image shown. It will however be the same character"
 			)
 
 			embed.set_footer(text="{}:{}".format(ctx.author.id, char_id))
@@ -300,8 +300,8 @@ class rewards(commands.Cog):
 			elif color == discord.Colour(8388737) and str(reaction) == u'\u2705':  # check mark for select level 1 image
 				target_user, char = embed.footer.text.split(":")
 				if user.id == int(target_user):
-					if vouchers >= 1:
-						add_playervouchers(user.id, -1)
+					if vouchers >= 2:
+						add_playervouchers(user.id, -2)
 						directory = char_dir + "//" + char
 						with open(directory + '//imagelist.txt', "r") as f:
 							lines = [line.rstrip() for line in f]

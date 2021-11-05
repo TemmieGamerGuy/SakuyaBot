@@ -26,7 +26,7 @@ class Spells():
 		self.battle_log = []#keeps the battle log. Will only print out the latest 10 entries
 		self.image = None#image put on battle embed
 		self.player_pointer = [0,0]#pointers to the current action the game is waiting on
-		self.waiting_target = [None,None]#waiting for player to select target. Stores values until then cause im lazy
+		self.waiting_target = [[0, 0, 0], [0, 0, 0]]#waiting for player to select target. Stores values until then cause im lazy
 		self.total_hp = 0#stores max total hp of all characters in battle (used for points calculation)
 		self.team_hp = [0,0]
 		self.winner = None#stores who the winner of the game is
@@ -428,7 +428,13 @@ class Spells():
 		message = ["{} used the spell card {}".format(move[0][5],move[0][6][0])]
 		message.extend(self.team_buff(enemy,"life_steal",move[0],-10))
 		#self.get_ownId(move[0][5],move[4])
-		
+
+	def yuuka_spell(self,move):
+		enemy = 1 - move[4]
+		message = ["{} used the spell card {}".format(move[0][5],move[0][6][0])]
+		message.extend(self.team_buff(enemy,"life_steal",move[0],-10))
+		#self.get_ownId(move[0][5],move[4])
+
 	def rika_spell(self,move):
 		card = move[0]
 		spell = ["Reload","self_status",40,False,6,"Reload Shell's for the Shrine Tank","loaded",-10]
@@ -475,7 +481,6 @@ class Spells():
 		
 		self.battle_log.extend(message)
 
-
 	def rikako_spell(self,move):
 		enemy = 1 - move[4]
 		power = move[0][6][6]
@@ -493,7 +498,7 @@ class Spells():
 				message.append("{} received the status effect {}".format(card[5],statuses[num][0]))
 		
 		self.battle_log.extend(message)
-		
+
 	def sakuya_spell(self,move):
 		target = move[2][1]
 		enemy = 1 - move[4]
@@ -537,13 +542,21 @@ class Spells():
 			message.append("{} recovered {} HP".format(i[5],heal_amount))
 		
 		self.battle_log.extend(message)
-	
+
+	def elly_spell(self, move):
+		team = move[4]
+		message = ["{} used the spell card {}".format(move[0][5], move[0][6][0])]
+		message.extend(self.team_buff(team, move[0][6][6], move[0][6][7]))
+
+		message.extend(self.target_buff(move[0], "vamp", 0, 3))
+
+		self.battle_log.extend(message)
+
 	def remilia_spell(self,move):
 		team = move[4]
 		message = ["{} used the spell card {}".format(move[0][5],move[0][6][0])]
-		message.extend(self.team_buff(team,move[0][6][6],move[0][6][7]))
-		
-		message.extend(self.target_buff(move[0],"vamp",0,3))
+		message.extend(self.team_buff(team, "hp_regen", 10, move[0][6][7]))
+		message.extend(self.team_buff(team, "vamp", 0, move[0][6][7]))
 		
 		self.battle_log.extend(message)
 	

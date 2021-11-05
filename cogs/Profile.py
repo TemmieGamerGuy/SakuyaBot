@@ -11,6 +11,7 @@ rarity_dir = ".//Rarities"
 im_x = 100
 im_y = 280
 
+
 class Profile(commands.Cog):
 	def __init__(self,client):
 		self.client = client
@@ -55,6 +56,7 @@ class Profile(commands.Cog):
 				
 			value -= 1
 			profile[0] = cards[value][10]#saves hidden identifier. ID can change (sort) and card will stay the same
+			print(cards[value])
 			self.profiles[ctx.author.id] = profile
 			await ctx.send("Featured card has been set to {}".format(cards[value][2]))
 			self.update = True
@@ -120,9 +122,9 @@ class Profile(commands.Cog):
 			card_data = -1
 			
 		#Theses will always return something if charinfo returns something
+		#^ no they don't
 		user_coins = get_playercoins(ctx.author.id)
-		user_saves = get_playersave()[ctx.author.id]
-		
+
 		PvP_class = get_pvp()
 		try:
 			fights_won = PvP_class.fight_count[ctx.author.id]
@@ -150,6 +152,7 @@ class Profile(commands.Cog):
 		
 		#Card
 		if card_data != -1:
+			print(card_data)
 			bgDraw.text((10,100),"Featured Card",(255,255,255),font=font_bold)
 			bgDraw.text((10,150),card_data[2],(255,255,255),font=font)
 			if not card_data[1].startswith('https'):

@@ -1,6 +1,9 @@
 # character ID (0), file name (1), nickname (2), level (3), rarity (4), HP (5), ATK (6), SPD (7), Favourite (8),
 # Current XP (9), Hidden Identifier (10)
 import asyncio
+import sys
+import traceback
+
 import discord
 import io
 import math
@@ -71,7 +74,7 @@ def load_obj(name):
 char_save = load_obj("Char_save")
 player_save = load_obj("Player_save")
 char_info = {}
-c.execute("SELECT * FROM char_info_encr")
+c.execute("SELECT * FROM char_info")
 rows = c.fetchall()
 for row in rows:
     if row[0] not in char_info:
@@ -990,10 +993,10 @@ async def quit(ctx):
     if ctx.message.author.id == OWNER_ID:
         save_obj(player_save, "Player_save")
         save_obj(char_save, "Char_save")
-        c.execute("DELETE FROM char_info_encr")
+        c.execute("DELETE FROM char_info")
         for user in char_info:
             for card in char_info[user]:
-                c.execute("INSERT INTO char_info_encr Values(?,?,?,?,?,?,?,?,?,?,?,?)", (
+                c.execute("INSERT INTO char_info Values(?,?,?,?,?,?,?,?,?,?,?,?)", (
                     user, card[0], card[1], card[2], card[3], str(card[4]), str(card[5]), str(card[6]), str(card[7]),
                     int(card[8]), str(card[9]), str(card[10])))
         conn.commit()
@@ -1063,7 +1066,9 @@ async def create(ctx, user, folder, rarity, lvl, hp, atk, spd, *, img):
     """Bot owner only"""
     global char_info
     if ctx.message.author.id == OWNER_ID:
-        max = len(char_info[int(user)]) + 1
+        user_chars2 = char_info[int(user)].copy()
+        user_chars2.sort(key=lambda x: x[10])
+        max = user_chars2[-1][10] + 1
         char_info[int(user)].append(
             [folder, img, fullcharacters[folder][0], int(lvl), int(rarity), int(hp), int(atk), int(spd), False, 0, max])
         c.execute("INSERT INTO char_info Values(?,?,?,?,?,?,?,?,?,?,?,?)", (
@@ -1084,7 +1089,9 @@ def create_card(user, character, image, lvl,
                 weights=[70, 20, 7, 2, 1]):  # Non command version of create (kinda?). Used for rewards from shop
     global char_info
     try:
-        max = len(char_info[int(user)]) + 1
+        user_chars2 = char_info[int(user)].copy()
+        user_chars2.sort(key=lambda x: x[10])
+        max = user_chars2[-1][10] + 1
     except KeyError:
         max = 1
     card = generate_char(character, image, max, lvl, weights)
@@ -1333,6 +1340,27 @@ async def offer(ctx, id=0):
 async def offer_error(ctx, error):
     await ctx.send("Please specify a valid ID")
     print(error)
+
+@client.command()
+async def doit(ctx):
+    global char_info
+    if ctx.author.id == OWNER_ID:
+        i2=0
+        for user in char_info:
+            i2+=1
+            seen = []
+            copies = []
+            user_chars2 = char_info[user].copy()
+            user_chars2.sort(key=lambda x: x[10])
+            max = user_chars2[-1][10] + 1
+            for lst in user_chars2:
+                if lst[10] in seen:
+                    lst[10] = max + len(copies)
+                    copies.append(lst[10])
+                seen.append(lst[10])
+            char_info[user] = user_chars2
+            if i2 % 10 ==0:
+                print("Completed "+str(i2)+ " users")
 
 
 def gen_inv(user_chars, page):
@@ -1981,7 +2009,7 @@ async def print_guess_count(ctx):
     await ctx.send(str(correct_counter) + "/" + str(guess_counter))
 
 
-@client.command()
+@client.command(aliases=["Guess"])
 @commands.cooldown(10, 15, commands.BucketType.user)
 async def guess(ctx):
     """Guess the touhou character posted! Keeps score of successful player guesses as the guess rate of characters"""
@@ -2001,14 +2029,17 @@ async def guess(ctx):
         guess_inst.append(ctx.channel.id)  # adds channel to list of active guess instances
 
     guess_counter += 1  # ran the command
-    row = c.execute("SELECT * FROM guild_settings WHERE guildID=?", (ctx.guild.id,)).fetchone()
-    if row is not None:
-        if row[2] == 1:
-            chardict = fullcharacters
+    if not isinstance(ctx.channel, discord.channel.DMChannel):
+        row = c.execute("SELECT * FROM guild_settings WHERE guildID=?", (ctx.guild.id,)).fetchone()
+        if row is not None:
+            if row[2] == 1:
+                chardict = fullcharacters
+            else:
+                chardict = characters
         else:
             chardict = characters
     else:
-        chardict = characters
+        chardict = fullcharacters
 
     # gets some info and picks character to use
     target = random.choice(list(chardict))
@@ -2048,7 +2079,7 @@ async def guess(ctx):
 
     # Checks if message send is the same as an item in the solution
     def check(m):
-        if m.channel == ctx.channel:
+        if m.channel == ctx.channel and len(m.content) <30:
             for i in sol:
                 if i.lower() in m.content.lower():
                     return True
@@ -2066,7 +2097,9 @@ async def guess(ctx):
         # create character to save
 
         try:
-            max = len(char_info[int(msg.author.id)]) + 1
+            user_chars2 = char_info[int(msg.author.id)].copy()
+            user_chars2.sort(key=lambda x: x[10])
+            max = user_chars2[-1][10] + 1
             new_char = generate_char(target, image, max)
         except:
             new_char = generate_char(target, image, 1)
@@ -2193,7 +2226,9 @@ async def forceguess(ctx, character):
         # create character to save
 
         try:
-            max = len(char_info[int(msg.author.id)]) + 1
+            user_chars2 = char_info[int(msg.author.id)].copy()
+            user_chars2.sort(key=lambda x: x[10])
+            max = user_chars2[-1][10] + 1
             new_char = generate_char(target, image, max)
         except:
             new_char = generate_char(target, image, 1)
@@ -2236,6 +2271,23 @@ async def add(ctx):
     with open(char_dir + "//" + str(ctx.channel.name) + "//imagelist.txt", "a") as f:
         f.write("\n" + imglink)
 
+
+@client.event
+async def on_command_error(ctx, error):
+
+    if hasattr(ctx.command, 'on_error'):
+        return
+    if ctx.cog:
+        print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
+        traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
+        return
+
+    error = getattr(error, 'original', error)
+
+    if isinstance(error, commands.CommandNotFound):
+        return
+    print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
+    traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
 for filename in os.listdir('./cogs'):
     if filename.endswith(".py"):

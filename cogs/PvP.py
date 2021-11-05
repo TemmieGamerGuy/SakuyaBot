@@ -267,20 +267,20 @@ class PvP(commands.Cog):
 				battle, id = self.return_battle(user)
 
 				if compid.startswith("attack"):  # attack
-					card = battle.inst_card[id - 1][int(compid[-1]) - 1]
+					card = battle.inst_card[id - 1][int(compid[-1])]
 
 					if card[6] == ["Reload", "self_status", 40, False, 6, "Reload Shell's for the Shrine Tank",
 								   "loaded", -10] and "loaded" not in card[4]:
 						await user.send("The Shrine Tank can't attack without being loaded")
 						return  # im going to regret putting this here in the future but i dont care for now. Sorry to me in advance jk enjoy fixing this mess lmao
 
-					battle.waiting_target[id - 1] = [card, "atk", None, 10, id - 1]
+					battle.waiting_target[id - 1][int(compid[-1])] = [card, "atk", None, 10, id - 1]
 					embed, targets = battle.select_target(id - 1)
 					complist = []
 					msgcomplist = message.components
 					for emoji in targets:  # Add only buttons for characters alive
-						complist.append(create_button(style=ButtonStyle.grey, emoji=emoji, custom_id=emoji+str(int(compid[-1]))))
-					msgcomplist[int(compid[-1]) - 1] = create_actionrow(*complist)
+						complist.append(create_button(style=ButtonStyle.grey, emoji=emoji, custom_id=emoji+compid[-1]))
+					msgcomplist[int(compid[-1])] = create_actionrow(*complist)
 					await message.edit(components=msgcomplist)
 
 					# msg.add_reaction(u"\U0001F1E6")#A
@@ -289,31 +289,31 @@ class PvP(commands.Cog):
 					battle.msg[id - 1] = message
 
 				elif compid.startswith('shield'):  # defend
-					card = battle.inst_card[id - 1][int(compid[-1]) - 1]
+					card = battle.inst_card[id - 1][int(compid[-1])]
 					battle.actionBar.append([card, "def", None, 5, id - 1])
 
 					complist = message.components
-					complist[(int(compid[-1]) - 1)] = create_actionrow(create_button(style=ButtonStyle.green, label='  '),
+					complist[(int(compid[-1]))] = create_actionrow(create_button(style=ButtonStyle.green, label='  '),
 																	   create_button(style=ButtonStyle.green, label='  '),
 																	   create_button(style=ButtonStyle.green, label='  '))
 					await message.edit(components=complist)
 					await battle.next_command(id - 1, complist, message)
 
-				elif compid == "spell":  # spell card
-					card = battle.inst_card[id - 1][int(compid[-1]) - 1]
+				elif compid.startswith("spell"):  # spell card
+					card = battle.inst_card[id - 1][int(compid[-1])]
 					spell = card[6]
 					points = battle.points[id - 1]
 					if points >= spell[2]:  # cost of spell
 						battle.points[id - 1] -= spell[2]  # remove cost of spell from points
 
 						if spell[3]:  # is a targeting spell
-							battle.waiting_target[id - 1] = [card, "spell", None, spell[4], id - 1]
+							battle.waiting_target[id - 1][int(compid[-1])] = [card, "spell", None, spell[4], id - 1]
 							embed, targets = battle.select_target(id - 1)
 							complist = []
 							msgcomplist = message.components
 							for emoji in targets:  # Add only buttons for characters alive
-								complist.append(create_button(style=ButtonStyle.grey, emoji=emoji, custom_id=emoji + str(int(compid[-1]) - 1)))
-							msgcomplist[int(compid[-1]) - 1] = create_actionrow(*complist)
+								complist.append(create_button(style=ButtonStyle.grey, emoji=emoji, custom_id=emoji + str(int(compid[-1]))))
+							msgcomplist[int(compid[-1])] = create_actionrow(*complist)
 							await message.edit(components=msgcomplist)
 
 							battle.msg[id - 1] = message
@@ -321,7 +321,7 @@ class PvP(commands.Cog):
 						else:  # is not a targeting spell
 							battle.actionBar.append([card, "spell", None, spell[4], id - 1])
 							complist = message.components
-							complist[(int(compid[-1]) - 1)] = create_actionrow(
+							complist[(int(compid[-1]))] = create_actionrow(
 								create_button(style=ButtonStyle.green, label='  '),
 								create_button(style=ButtonStyle.green, label='  '),
 								create_button(style=ButtonStyle.green, label='  '))
@@ -331,13 +331,14 @@ class PvP(commands.Cog):
 					else:
 						await user.send("You don't have enough power to cast this spell")
 
-				else:
+				elif compid.startswith("🇦") or compid.startswith("🇧") or compid.startswith("🇨"):
 					battle, id = self.return_battle(user)
-					action = battle.waiting_target[id - 1]
 					try:
-						pointer = int(compid[-1]) - 1  # What character are we currently talking about
+						pointer = int(compid[-1]) # What character are we currently talking about
 					except:
 						return
+					action = battle.waiting_target[id - 1][pointer]
+
 					if compid.startswith("🇦"):
 						action[2] = (pointer, 0)
 					elif compid.startswith("🇧"):
@@ -365,7 +366,6 @@ class PvP(commands.Cog):
 
 			elif color == discord.Colour(7895164):  # select target for attack
 				print("depreciated")
-
 
 			elif color == discord.Colour(16776962):  # select quest for pve
 				await ctx.edit_origin()
@@ -467,7 +467,7 @@ class PvP(commands.Cog):
 
 						await message.edit(embed=embed)
 
-	@commands.command()
+	@commands.command(aliases=["Select"])
 	async def select(self, ctx, ID):
 		"""choose card for pvp. Only usuable when prompted by bot to use it"""
 		ID = int(ID)
@@ -534,12 +534,13 @@ class PvP(commands.Cog):
 	@commands.command(aliases=["PvE", "pve", "quest", "Quest"])
 	async def adventure(self, ctx, page=0):
 		player = ctx.author
+		cards = None
 		try:
 			cards = get_charinfo()[player.id]
 		except:
 			card = None
 
-		if cards == None or len(cards) < 3:
+		if cards is None or len(cards) < 3:
 			await ctx.send("You can't start a fight if you don't have at least 3 cards")
 			return
 
@@ -812,8 +813,9 @@ class Battle(spellcard_func.Spells):
 		except Exception as e:
 			pass'''
 		if numcomp is not None:
-			if numcomp[0]['components'][0]['style'] == 3 and numcomp[1]['components'][0]['style'] == 3 and numcomp[2]['components'][0]['style'] == 3:  # third command already chosen
+			if numcomp[0]['components'][0]['style'] in (3, 4) and numcomp[1]['components'][0]['style'] in (3, 4) and numcomp[2]['components'][0]['style'] in (3, 4):  # third command already chosen
 				self.locks[id] = True
+				self.msg[id] = message
 
 				if self.locks[0] == self.locks[1]:  # both player have selected all their moves
 					await self.act_turn()  # starts turn
@@ -827,20 +829,22 @@ class Battle(spellcard_func.Spells):
 						# send next set of commands
 						embed = self.generate_command_embed(0)
 						complist = []
+						cards = self.inst_card[0]
 
 						for i, card in enumerate(cards):
 							if "dead" in card[4]:
 								complist.append(create_actionrow(create_button(style=ButtonStyle.red, label='  '),
 																 create_button(style=ButtonStyle.red, label='  '),
 																 create_button(style=ButtonStyle.red, label='  ')))
-							complist.append(create_actionrow(
-								create_button(style=ButtonStyle.grey, emoji='⚔', custom_id='attack' + str(i + 1)),
-								create_button(style=ButtonStyle.grey, emoji='🛡', custom_id='shield' + str(i + 1)),
-								create_button(style=ButtonStyle.grey,
-											  emoji=self.PvP.client.get_emoji(865682533236080652),
-											  custom_id='spell1' + str(i + 1))))
-						if message is not None:
-							await message.edit(embed=embed, components=complist)
+							else:
+								complist.append(create_actionrow(
+									create_button(style=ButtonStyle.grey, emoji='⚔', custom_id='attack' + str(i)),
+									create_button(style=ButtonStyle.grey, emoji='🛡', custom_id='shield' + str(i)),
+									create_button(style=ButtonStyle.grey,
+												  emoji=self.PvP.client.get_emoji(865682533236080652),
+												  custom_id='spell1' + str(i))))
+						if self.msg[0] is not None:
+							await self.msg[0].edit(embed=embed, components=complist)
 							self.msg[0] = message
 						else:
 							msg = await self.users[0].send(embed=embed)
@@ -848,20 +852,22 @@ class Battle(spellcard_func.Spells):
 						if not self.pve:
 							embed = self.generate_command_embed(1)
 							complist = []
+							cards = self.inst_card[1]
 
 							for i, card in enumerate(cards):
 								if "dead" in card[4]:
 									complist.append(create_actionrow(create_button(style=ButtonStyle.red, label='  '),
 																	 create_button(style=ButtonStyle.red, label='  '),
 																	 create_button(style=ButtonStyle.red, label='  ')))
-								complist.append(create_actionrow(
-									create_button(style=ButtonStyle.grey, emoji='⚔', custom_id='attack' + str(i + 1)),
-									create_button(style=ButtonStyle.grey, emoji='🛡', custom_id='shield' + str(i + 1)),
-									create_button(style=ButtonStyle.grey,
-												  emoji=self.PvP.client.get_emoji(865682533236080652),
-												  custom_id='spell1' + str(i + 1))))
-							if message is not None:
-								await message.edit(embed=embed, components=complist)
+								else:
+									complist.append(create_actionrow(
+										create_button(style=ButtonStyle.grey, emoji='⚔', custom_id='attack' + str(i)),
+										create_button(style=ButtonStyle.grey, emoji='🛡', custom_id='shield' + str(i)),
+										create_button(style=ButtonStyle.grey,
+													  emoji=self.PvP.client.get_emoji(865682533236080652),
+													  custom_id='spell1' + str(i))))
+							if self.msg[1] is not None:
+								await self.msg[1].edit(embed=embed, components=complist)
 								self.msg[1] = message
 							else:
 								msg = await self.users[1].send(embed=embed)
@@ -873,7 +879,7 @@ class Battle(spellcard_func.Spells):
 					await self.users[id].send("Waiting for AI")
 					ldict = {"moves": self.actionBar, "level": int(self.stage), "chars": self.inst_card,
 							 "points": self.points}
-					exec("a = PvE." + QUEST_LIST[int(self.quest)][0] + "_AI(moves,level,points,chars)", globals(), ldict)
+					exec("a = PvE." + QUEST_LIST[int(self.quest)][0] + "_AI(moves,level,points,chars)", globals(), ldict) #wtf is this bs
 					self.actionBar.extend(ldict["a"])
 
 					await self.act_turn()  # starts turn
@@ -894,12 +900,13 @@ class Battle(spellcard_func.Spells):
 								complist.append(create_actionrow(create_button(style=ButtonStyle.red, label='  '),
 																 create_button(style=ButtonStyle.red, label='  '),
 																 create_button(style=ButtonStyle.red, label='  ')))
-							complist.append(create_actionrow(
-								create_button(style=ButtonStyle.grey, emoji='⚔', custom_id='attack' + str(i + 1)),
-								create_button(style=ButtonStyle.grey, emoji='🛡', custom_id='shield' + str(i + 1)),
-								create_button(style=ButtonStyle.grey,
-											  emoji=self.PvP.client.get_emoji(865682533236080652),
-											  custom_id='spell1' + str(i + 1))))
+							else:
+								complist.append(create_actionrow(
+									create_button(style=ButtonStyle.grey, emoji='⚔', custom_id='attack' + str(i)),
+									create_button(style=ButtonStyle.grey, emoji='🛡', custom_id='shield' + str(i)),
+									create_button(style=ButtonStyle.grey,
+												  emoji=self.PvP.client.get_emoji(865682533236080652),
+												  custom_id='spell1' + str(i))))
 						if message is not None:
 							await message.edit(embed=embed, components=complist)
 							self.msg[0] = message
@@ -923,12 +930,13 @@ class Battle(spellcard_func.Spells):
 					complist.append(create_actionrow(create_button(style=ButtonStyle.red, label='  '),
 													 create_button(style=ButtonStyle.red, label='  '),
 													 create_button(style=ButtonStyle.red, label='  ')))
-				complist.append(create_actionrow(
-					create_button(style=ButtonStyle.grey, emoji='⚔', custom_id='attack' + str(i + 1)),
-					create_button(style=ButtonStyle.grey, emoji='🛡', custom_id='shield' + str(i + 1)),
-					create_button(style=ButtonStyle.grey,
-								  emoji=self.PvP.client.get_emoji(865682533236080652),
-								  custom_id='spell1' + str(i + 1))))
+				else:
+					complist.append(create_actionrow(
+						create_button(style=ButtonStyle.grey, emoji='⚔', custom_id='attack' + str(i)),
+						create_button(style=ButtonStyle.grey, emoji='🛡', custom_id='shield' + str(i)),
+						create_button(style=ButtonStyle.grey,
+									  emoji=self.PvP.client.get_emoji(865682533236080652),
+									  custom_id='spell1' + str(i))))
 			if message is not None:
 				await message.edit(embed=embed, components=complist)
 				self.msg[id] = message
