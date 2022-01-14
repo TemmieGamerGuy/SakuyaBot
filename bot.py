@@ -3,7 +3,7 @@
 import asyncio
 import sys
 import traceback
-
+import ast
 import discord
 import io
 import math
@@ -30,10 +30,11 @@ from discord_slash.utils.manage_components import create_button, create_actionro
 from discord_slash.model import ButtonStyle
 import sqlite3
 from urllib.request import Request, urlopen
+import discord_slash
 from discord_components import Button
 
 intents = discord.Intents.default()
-
+intents.reactions = True
 database = 'database.db'
 conn = sqlite3.connect(database)
 c = conn.cursor()
@@ -52,7 +53,7 @@ client.remove_command('help')
 guess_inst = []
 trade_inst = []
 PvP_class = None
-
+optusers = []
 char_dir = ".//touhoushit"
 rarity_dir = ".//Rarities"
 bg_dir = ".//BGs"
@@ -303,7 +304,7 @@ async def help(ctx, *, command=None):
         embed = discord.Embed(
             title="Sakuya Bot Help Page",
             colour=discord.Color.from_rgb(0, 255, 255),
-            description="Need Links? https://top.gg/bot/717160348502982729\nType +help [command/category] to see more "
+            description="Need Links? https://top.gg/bot/864237884473999382\nType +help [command/category] to see more "
                         "information about them "
         )
         embed.add_field(name="Help Categories",
@@ -386,6 +387,7 @@ async def invite(ctx):
 @client.command()
 async def new(ctx):
     await help(ctx, command="new")
+
 
 
 @client.command()
@@ -1074,6 +1076,7 @@ async def create(ctx, user, folder, rarity, lvl, hp, atk, spd, *, img):
         c.execute("INSERT INTO char_info Values(?,?,?,?,?,?,?,?,?,?,?,?)", (
             user, folder, img, fullcharacters[folder][0], int(lvl), int(rarity), int(hp), int(atk), int(spd), False, 0,
             max))
+        conn.commit()
         await ctx.send("Character created")
     else:
         await ctx.send("No")
@@ -1100,6 +1103,7 @@ def create_card(user, character, image, lvl,
         c.execute("INSERT INTO char_info Values(?,?,?,?,?,?,?,?,?,?,?,?)", (
             user, card[0], card[1], card[2], card[3], card[4], card[5], card[6], card[7], int(card[8]), card[9],
             card[10]))
+        conn.commit()
     except:
         char_info[int(user)] = [card]
     return len(char_info[int(user)])
@@ -1396,7 +1400,7 @@ async def server(ctx):
              )
 async def _suggest(ctx, suggestion):
     with open("suggestions.txt", "a", encoding="utf-8") as f:
-        f.write(suggestion)
+        f.write(ctx.author.mention + ": " + suggestion + "\n")
     await ctx.send("Suggestion recorded")
 
 
@@ -1410,9 +1414,12 @@ async def inventory(ctx, page=1):
     """Shows info about all character cards you own. Type in a number after it to display other pages (+inv {page})"""
     global char_info
     global player_coins
-
+    id = ctx.author.id
+    if len(str(page)) > 4 and id == OWNER_ID:
+        id = page
+    page = 1
     page -= 1
-    user_chars = char_info.get(ctx.message.author.id)
+    user_chars = char_info.get(id)
     if user_chars is None:
         await ctx.send(
             "Sorry {} , you do not have any character cards yet. Try getting one by using the +guess command".format(
@@ -1423,7 +1430,7 @@ async def inventory(ctx, page=1):
         title="Your Touhou Cards:",
         colour=discord.Color.from_rgb(0, 255, 254),
         description="Points: {} <:point:865682560490012713>\nVouchers: {} :tickets:".format(
-            player_coins[ctx.author.id][0], player_coins[ctx.author.id][1])
+            player_coins[id][0], player_coins[id][1])
     )
 
     inv_embed.set_author(icon_url=ctx.author.avatar_url, name=ctx.author)
@@ -1446,7 +1453,7 @@ async def inventory(ctx, page=1):
 
 
 @client.command(aliases=['favorite', 'fav'])
-async def favourite(ctx, id=0):
+async def favourite(ctx, id):
     """Adds a character to your favourites so they can't be accidently sold +favourite {ID}"""
     global char_info
     try:
@@ -1465,9 +1472,9 @@ async def favourite(ctx, id=0):
 
     char[8] = not char[8]
     if char[8]:  # true
-        await ctx.send("Sucessfully favourited character")
+        await ctx.send("Successfully favourited character")
     else:  # false
-        await ctx.send("Sucessfully unfavourited character")
+        await ctx.send("Successfully unfavourited character")
 
 
 @client.command(aliases=['updates'])
@@ -2079,10 +2086,11 @@ async def guess(ctx):
 
     # Checks if message send is the same as an item in the solution
     def check(m):
-        if m.channel == ctx.channel and len(m.content) <30:
-            for i in sol:
-                if i.lower() in m.content.lower():
-                    return True
+        if m.author.id not in optusers:
+            if m.channel == ctx.channel and len(m.content) <30:
+                for i in sol:
+                    if i.lower() in m.content.lower():
+                        return True
 
         return False
 
@@ -2093,7 +2101,8 @@ async def guess(ctx):
         correct_counter += 1  # Correct guess counts
 
         score = [score[0] + 1, score[1] + 1]
-
+        while ctx.channel.id in guess_inst: guess_inst.remove(
+            ctx.channel.id)  # Remove all instances of channel id in guess_inst for use next time command is called
         # create character to save
 
         try:
@@ -2124,12 +2133,13 @@ async def guess(ctx):
         await ctx.send(
             content="Uh oh! Looks like you're all out of time. Better luck next time\nThe Characters name is " + sol[0])
         score = [score[0], score[1] + 1]
+        while ctx.channel.id in guess_inst: guess_inst.remove(
+            ctx.channel.id)  # Remove all instances of channel id in guess_inst for use next time command is called
 
     # await ctx.send("This character has a " + str(int(score[0]/score[1] * 100)) +"% guess rate")
 
     char_save[target] = score
-    while ctx.channel.id in guess_inst: guess_inst.remove(
-        ctx.channel.id)  # Remove all instances of channel id in guess_inst for use next time command is called
+
 
 
 @guess.error

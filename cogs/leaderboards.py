@@ -43,7 +43,7 @@ class leaderboards(commands.Cog):
 		if position is None:
 			title += "\nYou are not on the leaderboard"
 		else:
-			ordinal = lambda n: "%d%s" % (n,"tsnrhtdd"[(math.floor(n/10)%10!=1)*(n%10<4)*n%10::4])#I ripped this off the interent
+			ordinal = lambda n: "%d%s" % (n,"tsnrhtdd"[(math.floor(n/10)%10!=1)*(n%10<4)*n%10::4])#I ripped this off the interent --
 			title += "\nYou are in " + ordinal(position) +" place"
 
 		embed = discord.Embed(
@@ -62,7 +62,7 @@ class leaderboards(commands.Cog):
 			embed = discord.Embed(
 				title = "Command Cooldown",
 				colour = discord.Color.from_rgb(255,0,0),
-				description = "You can only run this command once every 5 seconds. Please try again in {}s".format(int(error.retry_after))
+				description = "You can only run this command once every 20 seconds. Please try again in {}s".format(int(error.retry_after))
 			)
 		except:
 			embed = discord.Embed(

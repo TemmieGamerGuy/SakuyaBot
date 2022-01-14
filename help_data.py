@@ -53,6 +53,7 @@ help_data = {
 "changelog" : [0,"+changelog","See the latest updates for the bot"],
 "merge all" : [0,"+merge all","Does all possible card merges for you"],
 "requestdatadeletion" : [0,"+requestdatadeletion","Deletes all data the bot has stored on you"],
+"optout" : [0,"+optout","Toggles whether the bot can read your messages for guesses"],
 "hp":[2,"Hitpoints, if a card's hitpoints reaches 0 they will die. Once all cards on one side has died the other side will win"],
 "atk":[2,"Attack power. The higher this number is the more damage you will deal."],
 "spd":[2,"Speed. Determines who will attack first within the same priority bracket"],
@@ -69,9 +70,9 @@ help_data = {
 "trading" : [1,"Exchange touhou cards with other players",["trade","offer"]],
 "pvp" : [1,"Fight using your touhou cards with other players or the bot for coin rewards",["adventure","fight","surrender","select","remove"]],
 "combat" : [1,"Information about how mechanics in PvP/Combat of SakuyaBot Work",["hp","atk","spd","power","priority","level","rarity","defending","spell cards","status","status2","status3"]],
-"misc" : [1,"Commands that do not fit in other categories",["help","ping","8ball","server","report","requestdatadeletion"]],
+"misc" : [1,"Commands that do not fit in other categories",["help","ping","8ball","server","report","requestdatadeletion","optout"]],
 "rewards" :[1,"Things releated to rewards vouchers",["daily","vote","shop"]],
-"new" : [1,"New commands recently added to the bot",["filter","adventure","sort","changelog","merge all","requestdatadeletion"]]
+"new" : [1,"New commands recently added to the bot",["filter","adventure","sort","changelog","merge all","requestdatadeletion","optout"]]
 }
 #0 = Command
 #1 = Category

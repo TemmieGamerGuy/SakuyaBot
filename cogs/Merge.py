@@ -19,7 +19,7 @@ async def automerge(ctx, user):
 	for i, card in enumerate(sortedcards):
 		if card == sortedcards[-1]:
 			break
-		if card[0] == sortedcards[i + 1][0]:
+		if card[0] == sortedcards[i + 1][0] and not card[8] and not sortedcards[i + 1][8]:
 			if card[4] == sortedcards[i + 1][4]:
 				if card[4] <= 5:
 					Card1 = card

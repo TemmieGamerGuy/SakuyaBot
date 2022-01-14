@@ -149,7 +149,7 @@ characters = {
 	"18-2"	: ["Takane Yamashiro","Takane","Yamashiro","Yamashiro Takane"],
 	"18-3"	: ["Sannyo Komakusa","Sannyo","Komakusa","Komakusa Sannyo"],
 	"18-4"	: ["Misumaru Tamatsukuri","Misumaru","Tamatsukuri","Tamatsukuri Misumaru"],
-	"18-5"	: ["Megumu Lizunamaru","Lizunamaru Megumu","Megumu","Lizunamaru"],
+	"18-5"	: ["Megumu Iizunamaru","Iizunamaru Megumu","Megumu","Iizunamaru"],
 	"18-5-2": ["Tsukasa Kudamaki","Kudamaki Tsukasa","Tsukasa","Kudamaki"],
 	"18-6"	: ["Chimata Tenkyuu"," Chimata","Chimata","Tenkyuu"],
 	"18-7"	: ["Momoyo Himemushi","Himemushi Momoyo","Momoyo","Himemushi"],

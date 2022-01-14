@@ -1,7 +1,7 @@
 import topgg
 import discord
 from discord.ext import commands, tasks
-from bot import add_playervouchers
+from bot import add_playervouchers, c, conn
 from settings import *
 import asyncio
 import logging
@@ -44,32 +44,27 @@ class TopGG(commands.Cog):
 	
 	@commands.command(aliases = ["claim"])
 	async def vote(self, ctx):
-		with open("vote_info.txt", 'r+') as f:
-			content = f.readlines()
-			f.truncate(0)
-
-		self.claimable.extend([x.strip().replace("\n", "").split(",") for x in content])
-		print(str(self.claimable))
-		for id in self.claimable:
-			vote = (int(id[0]),int(id[1]))#comes in as string but i dont want to add int(id[num]) every single time i check for values
-			if ctx.author.id == vote[0]:
-				add_playervouchers(vote[0],vote[1])
-				embed = discord.Embed(
-					title = "Vote Received",
-					colour = discord.Color.from_rgb(255,0,255),
-					description = "Thank you for voting for Sakuya Bot <@{}>.\nYou have received {}:tickets: Reward Vouchers".format(vote[0],vote[1])
-				)
-				await ctx.send(embed=embed)
-				self.claimable.remove(id)
-				break
-		else:
+		vote = c.execute("SELECT * FROM vouchers WHERE userid=?", (ctx.author.id,)).fetchone()
+		if vote is None:
 			embed = discord.Embed(
-				title = "Vote For Bot",
-				colour = 0x00FF00,
-				description = "Vote for the bot at https://top.gg/bot/864237884473999382\n\nAfter voting type in +claim or +vote again to recieve a rewards voucher. You will recieve {} if you voted on the weekend. You can check if the bot recognizes that its the weekend by typing in +weekend".format(VOUCHERS*2)
+				title="Vote For Bot",
+				colour=0x00FF00,
+				description="Vote for the bot at https://top.gg/bot/864237884473999382\n\nAfter voting type in +claim or +vote again to recieve a rewards voucher. You will recieve {} if you voted on the weekend. You can check if the bot recognizes that its the weekend by typing in +weekend".format(
+					VOUCHERS * 2)
 			)
 
-			await ctx.send(embed = embed)
+			await ctx.send(embed=embed)
+		else:
+			add_playervouchers(int(vote[0]), vote[1])
+			embed = discord.Embed(
+				title="Vote Received",
+				colour=discord.Color.from_rgb(255, 0, 255),
+				description="Thank you for voting for Sakuya Bot <@{}>.\nYou have received {}:tickets: Reward Vouchers".format(
+					vote[0], vote[1])
+			)
+			c.execute("DELETE FROM vouchers WHERE userid=?", (ctx.author.id,))
+			conn.commit()
+			await ctx.send(embed=embed)
 		#await ctx.send("Command currently not in use")
 
 

@@ -89,8 +89,7 @@ QUEST_LIST = [["training", 6, "Dojo.jpeg"],
 			  ["mansion", 5, "Touhou.full.1222554.jpg"],
 			  ["shrine_n", 6, "Hakurei.Shrine.jpg"],
 			  ["shrine_ex", 7, "Hakurei.Shrine.jpg"],
-			  ["myouren", 6, "Myouren_Temple.png"]
-			  ]
+			  ["myouren", 6, "Myouren_Temple.png"]]
 
 
 class PvP(commands.Cog):
@@ -230,9 +229,15 @@ class PvP(commands.Cog):
 							colour=discord.Color.from_rgb(120, 120, 120),
 							description="Select 3 cards to fight with.\nUse +select {ID} to pick a card.\nUse +remove to clear previous card selection"
 						)
-
-						msg1 = await fight.user1.send(embed=fightEmbed)
-						msg2 = await fight.user2.send(embed=fightEmbed)
+						auser = fight.user1
+						try:
+							msg1 = await fight.user1.send(embed=fightEmbed)
+							auser = fight.user2
+							msg2 = await fight.user2.send(embed=fightEmbed)
+						except:
+							await fight.channel.send(f"{auser.name}'s DMs are closed, please open them to fight")
+							self.battles.remove(fight)
+							return
 
 						fight.msg = [msg1, msg2]
 					else:
@@ -379,9 +384,9 @@ class PvP(commands.Cog):
 
 				componentlist = [[]]
 				for i in range(QUEST_LIST[num][1]):  # add reactions
-					if len(componentlist[0]) < 5:
+					if i < 5:
 						componentlist[0].append(create_button(style=ButtonStyle.grey, emoji=str(i + 1) + "\u20E3", custom_id="fight" + str(i + 1)))
-					elif len(componentlist[0]) == 5:
+					elif i == 5:
 						componentlist.append([create_button(style=ButtonStyle.grey, emoji=str(i + 1) + "\u20E3", custom_id="fight" + str(i + 1))])
 					else:
 						componentlist[1].append(create_button(style=ButtonStyle.grey, emoji=str(i + 1) + "\u20E3", custom_id="fight" + str(i + 1)))

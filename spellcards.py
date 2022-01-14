@@ -47,7 +47,7 @@ Spell_cards = {
 	"4-2"  : ["Scarlet Symphony - Scarlet Phoneme","kurumi_spell",70,False,10,"Permanently increase speed by 20%, gain vamp status for 3 turns, speed buff stacks",0.2],
 	"4-3"  : ["Bad Apple!!","elly_spell",120,False,10,"Gives all Teammates and herself Regen and Vamp status for 3 turns",3],
 	"4-4"  : ["Alice Maestra","hikrariko_spell",75,True,10,"A powerful light shines from Hikariko. Deal moderate damage and blind one target. Blind lasts 3 turns.",0.3],
-	"4-5"  : ["Double Spark “Sleeping Terror”","yuuka_spell",150,False,11,"Her signature move from old era, she temporarily clones herself and shoots two giant lasers at once, dealing massive damage to all targets. Targets hit have life drain status for 3 turns, taking 5% hp per turn which heals the caster. She also gets sleep status for 3 turns",0.5],
+	#"4-5"  : ["Double Spark “Sleeping Terror”","yuuka_spell",150,False,11,"Her signature move from old era, she temporarily clones herself and shoots two giant lasers at once, dealing massive damage to all targets. Targets hit have life drain status for 3 turns, taking 5% hp per turn which heals the caster. She also gets sleep status for 3 turns",0.5],
 	"4-6-1": ["Illusion of a Maid - Icemilk Magic","XXXXXXX",50,True,10,"Gain a large HP-Regen for 5 turns, 10% HP recovered per turn","hp_regen",5,0.1],
 	"4-6-2": ["Cute Devil - Innocence","XXXXXXXX",50,True,10,"Gains vamp status for the next 5 turns","vamp",5],#Should target one ally
 	"6-1"  : ['Darkness Sign "Demarcation"',"multi_target_status",70,False,10,"Weaving circle spreads followed by aimed waves of bullets. Blinds all enemies for 2 turns","blind",2,3],

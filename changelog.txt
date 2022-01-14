@@ -1,0 +1,8 @@
+**[14/07/21]**:Sakuya Bot put online, some reaction handling converted to on_raw_reaction_add
+**[15/07/21]**:Suggest command added, first slash command implementation
+**[23/07/21]**:Fixed error occuring when user has 0 points, intents reworked, emojis now display correctly, spelling corrections, fixed missing await
+**[24/07/21]**:Voting and rewards fixed, added check to get rid of no embed warning
+**[25/07/21]**:Changelog added, invite link perms changed, more emoji fixes, intents reworked again so privileged intents are no longer required, spelling fixes
+**[26/07/21]**:Image handling changed to use links instead of uploading the file each time, leaderboard changed to show position and 5 people above and below in ranking, users can now request data on them to be deleted, debug commands added, fetch_user fixes
+**[27/07/21]**:Partially converted char_info storage to SQL database, stopped negative xp feeding bug, fixed image url related issues, added merge all command to speed up merging, help sheet updated, small bugs fixed, spelling fixes
+**[28/07/21]**:+fight and +adventure now back in a functional state, Updated image change to use buttons and have a better display than dumping the images all over the channel, small bug fixes for changelog and image display, possibly working erasure of deleted users' data, help command update a bit
