@@ -412,7 +412,10 @@ class rewards(commands.Cog):
                 embed.set_field_at(0, name=embed.fields[0].name, value=str(imgnum) + '/' + str(len(lines)))
                 embed.set_image(url=image)
             elif interaction.component_id == 'rightimageselect':
-                await interaction.edit_origin()
+                try:
+                    await interaction.edit_origin()
+                except:
+                    pass
                 char_name = embed.fields[0].name.split(" - ")[1]
                 directory = char_dir + "//" + char_name
                 with open(directory + '//imagelist.txt', "r") as f:

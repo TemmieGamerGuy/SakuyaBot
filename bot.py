@@ -2294,7 +2294,7 @@ async def on_command_error(ctx, error):
 
     error = getattr(error, 'original', error)
 
-    if isinstance(error, commands.CommandNotFound):
+    if isinstance(error, commands.CommandNotFound) or isinstance(error, commands.BadArgument):
         return
     print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
     traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
